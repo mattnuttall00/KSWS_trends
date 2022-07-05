@@ -28,33 +28,6 @@ boot.res[[5]]$sampleInfo[12,]
 
 unique(boot.res[[5]]$repData$obs.transectOrig[boot.res[[5]]$repData$Transect==12])
 
-  ## Edit strata from repData[[i]]$stratum ####
-
-
-### THIS IS NO LONGER NECESSARY AS THE EFFORT STRATA HAVE BEEN REMOVED FROM ALLDATA PRIOR TO RUNNING BOOTSTRAPPING
-
-
-## The "stratum" column in each dataframe of boot.res still has the priority strata, which we need to remove and then make numeric for incusion as a linear predictor in some detection function models
-
-# change the column from factor to character
-boot.res <- lapply(boot.res, function(x) {x$repData$stratum <- as.character(x$repData$stratum);x})
-
-# remove strata
-boot.res <- lapply(boot.res, function(x) {
-  x$repData$stratum[x$repData$stratum=="2011_H"] <- "2011"
-  x$repData$stratum[x$repData$stratum=="2011_L"] <- "2011"
-  x$repData$stratum[x$repData$stratum=="2014_H"] <- "2014"
-  x$repData$stratum[x$repData$stratum=="2014_L"] <- "2014"
-  x$repData$stratum[x$repData$stratum=="2016_H"] <- "2016"
-  x$repData$stratum[x$repData$stratum=="2016_L"] <- "2016"
-;x})
-
-boot.res <- lapply(boot.res, function(x) {x$repData$stratum <- as.numeric(x$repData$stratum);x})
-
-str(boot.res[[20]]$repData)
-
-
-
   ## Plot bootstrap results ####
 
 ## Plot the number of sightings among the bootstrap replicates and real data and print a mean summary:
@@ -96,18 +69,6 @@ ptm.dat <- read.csv("Output/Results/PTM_results_final.csv",        header = TRUE
 rmj.dat <- read.csv("Output/Results/RMJ_results_final_binned.csv", header = TRUE)
 stm.dat <- read.csv("Output/Results/STM_results_final.csv",        header = TRUE)
 
-# load in quantiles for all spcies
-ycg.quants <- read.csv("Output/Results/Plots/BS_quants/ycg.quants.csv")
-bsd.quants <- read.csv("Output/Results/Plots/BS_quants/bsd.quants.csv")
-#btg.quants <- read.csv("Output/Results/Plots/BS_quants/btg.quants.csv")
-gau.quants <- read.csv("Output/Results/Plots/BS_quants/gau.quants.csv")
-gpf.quants <- read.csv("Output/Results/Plots/BS_quants/gpf.quants.csv")
-gsl.quants <- read.csv("Output/Results/Plots/BS_quants/gsl.quants.csv")
-ltm.quants <- read.csv("Output/Results/Plots/BS_quants/ltm.quants.csv")
-pig.quants <- read.csv("Output/Results/Plots/BS_quants/pig.quants.csv")
-ptm.quants <- read.csv("Output/Results/Plots/BS_quants/ptm.quants.csv")
-rmj.quants <- read.csv("Output/Results/Plots/BS_quants/rmj.quants.csv")
-stm.quants <- read.csv("Output/Results/Plots/BS_quants/stm.quants.csv")
 
 
   ## Functions (plots & trends) ####
