@@ -13,6 +13,10 @@ There are two primary R scripts in this repository:
 * `RFunc.r` - This script holds the three main functions that run the bootstrapping. This script is sourced from within the second script
 * `CDS_trends_final.r` - This script calls the functions from the above script, runs the bootstrapping, and then runs the fitting of detection function models and GAM models for each replicate, for each species, and extracts the confidence intervals.
 
+## Environment
+
+Add details of R versions and package versions here...
+
 ## Data
 
 For the above scripts to run, you need: 
