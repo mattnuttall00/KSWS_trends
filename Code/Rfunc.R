@@ -143,7 +143,7 @@ createEffortData.func <- function(filename){
         ## re-name columns and re-order
         eff_dat.2 <- eff_dat.2 %>% dplyr::select(Habitat, Transect=Sample.Label,
                                                  eff_10="2010",eff_11="2011",eff_13="2013",eff_14="2014",
-                                                 eff_16="2016",eff_18="2018",eff_20="2020")
+                                                 eff_16="2016",eff_18="2018",eff_20="2020", eff_22="2022")
 
         ## Return finalised effort data:
         return(eff_dat.2)
@@ -313,7 +313,7 @@ bootstrap.plot <- function(bootres, plotwhat="Sightings", habitat="All", obsdat=
         if(!(plotwhat %in% c("Sightings", "Effort"))) stop("plotwhat should be either 'Sightings' or 'Effort'.")
         if(!(habitat %in% c("All","Dense","Open")))## ,"Nonf"))) ## *** Rachel removed Nonf 20/7/2020
                 stop("habitat should be one of: 'All', 'Dense', or 'Open'.")## , or 'Nonf'.")  ## *** Rachel removed Nonf
-        effnames <- c("eff_10", "eff_11", "eff_13", "eff_14", "eff_16", "eff_18", "eff_20") ## *** Rachel added eff_20
+        effnames <- c("eff_10", "eff_11", "eff_13", "eff_14", "eff_16", "eff_18", "eff_20", "eff_22") ## *** Rachel added eff_20
         ## Create a named vector, habitatCode, so we can easily reference "Dense" to "D", "Open" to "O, and
         ## "Nonf" to "NF".  For example if we want to convert "Dense" to "D", ask for habitatCode["Dense"].
         ## In general, habitatCode[habitat] gives the right thing for the habitat asked for in the function arguments.
