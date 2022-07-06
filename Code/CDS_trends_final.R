@@ -318,7 +318,7 @@ fitspecies.func.YCG <- function(bootrep){
   
   # create sample.table using SampleInfo
   sample.table <- data.frame(Sample.Label = rep(sampleInfo$Transect,times=7),
-                             Region.Label = rep(c("2010","2011","2013","2014","2016","2018","2020"),
+                             Region.Label = rep(c("2010","2011","2013","2014","2016","2018","2020", "2022"),
                                                 each=nrow(sampleInfo)),
                              Effort = c(sampleInfo[,3],sampleInfo[,4],sampleInfo[,5],
                                           sampleInfo[,6],sampleInfo[,7],sampleInfo[,8],sampleInfo[,9]))
@@ -346,7 +346,7 @@ fitspecies.func.YCG <- function(bootrep){
   
   # fit a GAM & predict
   gamfit <- gam(Estimate ~ s(Year, df=1), family=gaussian(link="identity"), data = estimates)
-  newdata <- data.frame(Year = seq(from=2010, to=2020, length.out = 100))
+  newdata <- data.frame(Year = seq(from=2010, to=2022, length.out = 100))
   pred <- predict.Gam(gamfit, newdata = newdata, type = "response")
   gampred <- data.frame(pred)
   
@@ -359,7 +359,7 @@ system.time(ycg.bs.gams <- lapply(1:length(boot.res), fitspecies.func.YCG)) #70 
 ycg.bs.gams.df <- data.frame(matrix(unlist(ycg.bs.gams), nrow=100, byrow = FALSE))
 
 # save
-write.csv(ycg.bs.gams.df, file="Output/Results/Trends/Bootstraps/ycg.bs.gams.df.csv")
+write.csv(ycg.bs.gams.df, file="C:/Users/cagger/Documents/Transect sampling/Transect 2022/analysis/Pop assess/GAMs from Github/Cloned through R project/KSWS_trends/ycg.bs.gams.df.csv")
 
 # read
 #ycg.bs.gams.df <- read.csv("Output/Results/Trends/Bootstraps/ycg.bs.gams.df.csv")
@@ -379,17 +379,17 @@ ycg.bs_ints <- ycg.bs_ints %>% rownames_to_column("quant")
 #BS_ints_tidy <- gather(BS_ints, key = "year", value = "confits", -quant)
 
 # quantiles into vectors
-ycg.quants <- data.frame(year = seq(from=2010, to=2020, length.out = 100),
+ycg.quants <- data.frame(year = seq(from=2010, to=2022, length.out = 100),
                          Q2.5 = as.numeric(ycg.bs_ints[1,2:101]),
                          Q7.5 = as.numeric(ycg.bs_ints[2,2:101]),
                          Q50 = as.numeric(ycg.bs_ints[3,2:101]),
                          Q92.5 = as.numeric(ycg.bs_ints[4,2:101]),
                          Q97.5 = as.numeric(ycg.bs_ints[5,2:101]))
 # save quantiles
-write.csv(ycg.quants, "Output/Results/Plots/BS_quants/ycg.quants.csv")
+write.csv(ycg.quants, "C:/Users/cagger/Documents/Transect sampling/Transect 2022/analysis/Pop assess/GAMs from Github/Cloned through R project/KSWS_trends/ycg.bs.gams.df.csv")
 
 # load quantiles
-ycg.quants <- read.csv("Output/Results/Plots/BS_quants/ycg.quants.csv")
+ycg.quants <- read.csv("C:/Users/cagger/Documents/Transect sampling/Transect 2022/analysis/Pop assess/GAMs from Github/Cloned through R project/KSWS_trends/ycg.bs.gams.df.csv")
 str(ycg.quants)
 ycg.quants <- ycg.quants[ ,-1]
 
