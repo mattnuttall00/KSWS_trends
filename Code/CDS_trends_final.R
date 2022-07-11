@@ -7,8 +7,12 @@
 ## sources R code and libraries, and loads the allData data-frame
 source("Rfunc.R")   
 
+## Read in full.region.table
+
+full.region.table <- read.csv("Data/full.region.table.csv")
+
 ## Create effort data "eff_dat.2":
-eff_dat.2 <- createEffortData.func(filename="Input/sample.table.csv")
+eff_dat.2 <- createEffortData.func(filename="Data/sample.table.csv")
 
 #### Run bootstrap ####
 
@@ -57,17 +61,17 @@ for(hab in c("All", "Dense", "Open", "Nonf")){
   ## Trends in abundance - GAMs ####
 
 # load in abundance estimates for all species
-ycg.dat <- read.csv("Output/Results/YCG_results_final.csv",        header = TRUE)
-bsd.dat <- read.csv("Output/Results/BSD_results_final.csv",        header = TRUE)
-btg.dat <- read.csv("Output/Results/BTG_results_final.csv",        header = TRUE)
-gau.dat <- read.csv("Output/Results/GAU_results_final.csv",        header = TRUE)
-gpf.dat <- read.csv("Output/Results/GPF_results_final.csv",        header = TRUE)
-gsl.dat <- read.csv("Output/Results/GSL_results_final_binned.csv", header = TRUE)
-ltm.dat <- read.csv("Output/Results/LTM_results_final_binned.csv", header = TRUE)
-pig.dat <- read.csv("Output/Results/PIG_results_final_binned.csv", header = TRUE)
-ptm.dat <- read.csv("Output/Results/PTM_results_final.csv",        header = TRUE)
-rmj.dat <- read.csv("Output/Results/RMJ_results_final_binned.csv", header = TRUE)
-stm.dat <- read.csv("Output/Results/STM_results_final.csv",        header = TRUE)
+ycg.dat <- read.csv("Data/CDS_results/YCG_results_final.csv",        header = TRUE)
+bsd.dat <- read.csv("Data/CDS_results/BSD_results_final.csv",        header = TRUE)
+btg.dat <- read.csv("Data/CDS_results/BTG_results_final.csv",        header = TRUE)
+gau.dat <- read.csv("Data/CDS_results/GAU_results_final.csv",        header = TRUE)
+gpf.dat <- read.csv("Data/CDS_results/GPF_results_final.csv",        header = TRUE)
+gsl.dat <- read.csv("Data/CDS_results/GSL_results_final_binned.csv", header = TRUE)
+ltm.dat <- read.csv("Data/CDS_results/LTM_results_final_binned.csv", header = TRUE)
+pig.dat <- read.csv("Data/CDS_results/PIG_results_final_binned.csv", header = TRUE)
+ptm.dat <- read.csv("Data/CDS_results/PTM_results_final.csv",        header = TRUE)
+rmj.dat <- read.csv("Data/CDS_results/RMJ_results_final_binned.csv", header = TRUE)
+stm.dat <- read.csv("Data/CDS_results/STM_results_final.csv",        header = TRUE)
 
 
 
@@ -78,12 +82,12 @@ plot95fun <- function(dat,quants,species,label,ylab,ymax){
   
   ggplot()+
     ylim(0,ymax)+
-    geom_point(data=dat[dat$Label==label,], aes(x=Year, y=Estimate), size=3.5)+
-    geom_errorbar(data=dat[dat$Label==label,],aes(x=Year, ymin=lcl, ymax=ucl),width=0.2)+
-    geom_line(data=quants, aes(x=year, y=Q50), colour="red", size=1)+
-    geom_line(data=quants, aes(x=year, y=Q2.5), colour="red", linetype="dashed", size=0.8)+
-    geom_line(data=quants, aes(x=year, y=Q97.5), colour="red", linetype="dashed", size=0.8)+
-    scale_x_continuous(breaks = c(2010,2011,2013,2014,2016,2018,2020))+
+    geom_point(data=dat[dat$Label==label,], aes(x=Year, y=N), size=3.5)+
+    geom_errorbar(data=dat[dat$Label==label,],aes(x=Year, ymin=n_lcl, ymax=n_ucl),width=0.2)+
+    geom_line(data=quants, aes(x=Year, y=Q50), colour="red", size=1)+
+    geom_line(data=quants, aes(x=Year, y=Q2.5), colour="red", linetype="dashed", size=0.8)+
+    geom_line(data=quants, aes(x=Year, y=Q97.5), colour="red", linetype="dashed", size=0.8)+
+    scale_x_continuous(breaks = c(2010,2011,2013,2014,2016,2018,2020,2022))+
     theme(panel.background = element_blank())+
     theme(axis.line = element_line(colour = "black"))+
     ggtitle(species)+
@@ -96,14 +100,14 @@ plot85fun <- function(dat,quants,species,label,ylab,ymax){
   
   ggplot()+
     ylim(0,ymax)+
-    geom_point(data=dat[dat$Label==label,], aes(x=Year, y=Estimate), size=3.5)+
-    geom_errorbar(data=dat[dat$Label==label,],aes(x=Year, ymin=lcl, ymax=ucl),width=0.2)+
-    geom_line(data=quants, aes(x=year, y=Q50), colour="red", size=1)+
-    geom_line(data=quants, aes(x=year, y=Q2.5), colour="red", linetype="dashed", size=0.8)+
-    geom_line(data=quants, aes(x=year, y=Q97.5), colour="red", linetype="dashed", size=0.8)+
-    geom_line(data=quants, aes(x=year, y=Q7.5), colour="blue", linetype="dashed", size=0.8)+
-    geom_line(data=quants, aes(x=year, y=Q92.5), colour="blue", linetype="dashed", size=0.8)+
-    scale_x_continuous(breaks = c(2010,2011,2013,2014,2016,2018,2020))+
+    geom_point(data=dat[dat$Label==label,], aes(x=Year, y=N), size=3.5)+
+    geom_errorbar(data=dat[dat$Label==label,],aes(x=Year, ymin=n_lcl, ymax=n_ucl),width=0.2)+
+    geom_line(data=quants, aes(x=Year, y=Q50), colour="red", size=1)+
+    geom_line(data=quants, aes(x=Year, y=Q2.5), colour="red", linetype="dashed", size=0.8)+
+    geom_line(data=quants, aes(x=Year, y=Q97.5), colour="red", linetype="dashed", size=0.8)+
+    geom_line(data=quants, aes(x=Year, y=Q7.5), colour="blue", linetype="dashed", size=0.8)+
+    geom_line(data=quants, aes(x=Year, y=Q92.5), colour="blue", linetype="dashed", size=0.8)+
+    scale_x_continuous(breaks = c(2010,2011,2013,2014,2016,2018,2020, 2022))+
     theme(panel.background = element_blank())+
     theme(axis.line = element_line(colour = "black"))+
     ggtitle(species)+
@@ -116,14 +120,14 @@ plot85Grfun <- function(dat,quants,species,label,ylab,ymax){
   
   ggplot()+
     ylim(0,ymax)+
-    geom_point(data=dat[dat$Label==label,], aes(x=Year, y=Estimate), size=3.5)+
-    geom_errorbar(data=dat[dat$Label==label,],aes(x=Year, ymin=lcl, ymax=ucl),width=0.2)+
-    geom_line(data=quants, aes(x=year, y=Q50), size=1)+
-    geom_line(data=quants, aes(x=year, y=Q2.5), linetype="dotted", size=0.8)+
-    geom_line(data=quants, aes(x=year, y=Q97.5), linetype="dotted", size=0.8)+
-    geom_line(data=quants, aes(x=year, y=Q7.5), linetype="dashed", size=0.8)+
-    geom_line(data=quants, aes(x=year, y=Q92.5), linetype="dashed", size=0.8)+
-    scale_x_continuous(breaks = c(2010,2011,2013,2014,2016,2018,2020))+
+    geom_point(data=dat[dat$Label==label,], aes(x=Year, y=N), size=3.5)+
+    geom_errorbar(data=dat[dat$Label==label,],aes(x=Year, ymin=n_lcl, ymax=n_ucl),width=0.2)+
+    geom_line(data=quants, aes(x=Year, y=Q50), size=1)+
+    geom_line(data=quants, aes(x=Year, y=Q2.5), linetype="dotted", size=0.8)+
+    geom_line(data=quants, aes(x=Year, y=Q97.5), linetype="dotted", size=0.8)+
+    geom_line(data=quants, aes(x=Year, y=Q7.5), linetype="dashed", size=0.8)+
+    geom_line(data=quants, aes(x=Year, y=Q92.5), linetype="dashed", size=0.8)+
+    scale_x_continuous(breaks = c(2010,2011,2013,2014,2016,2018,2020, 2022))+
     theme(panel.background = element_blank())+
     theme(axis.line = element_line(colour = "black"))+
     ggtitle(species)+
@@ -136,12 +140,12 @@ plot95Grfun <- function(dat,quants,species,label,ylab,ymax){
   
   ggplot()+
     ylim(0,ymax)+
-    geom_point(data=dat[dat$Label==label,], aes(x=Year, y=Estimate), size=3.5)+
-    geom_errorbar(data=dat[dat$Label==label,],aes(x=Year, ymin=lcl, ymax=ucl),width=0.2)+
-    geom_line(data=quants, aes(x=year, y=Q50), size=1)+
-    geom_line(data=quants, aes(x=year, y=Q2.5), linetype="dotted", size=0.8)+
-    geom_line(data=quants, aes(x=year, y=Q97.5), linetype="dotted", size=0.8)+
-    scale_x_continuous(breaks = c(2010,2011,2013,2014,2016,2018,2020))+
+    geom_point(data=dat[dat$Label==label,], aes(x=Year, y=N), size=3.5)+
+    geom_errorbar(data=dat[dat$Label==label,],aes(x=Year, ymin=n_lcl, ymax=n_ucl),width=0.2)+
+    geom_line(data=quants, aes(x=Year, y=Q50), size=1)+
+    geom_line(data=quants, aes(x=Year, y=Q2.5), linetype="dotted", size=0.8)+
+    geom_line(data=quants, aes(x=Year, y=Q97.5), linetype="dotted", size=0.8)+
+    scale_x_continuous(breaks = c(2010,2011,2013,2014,2016,2018,2020, 2022))+
     theme(panel.background = element_blank())+
     theme(axis.line = element_line(colour = "black"))+
     ggtitle(species)+
@@ -155,12 +159,12 @@ plot95Grfun2 <- function(dat,quants,species,label,ylab,ymax){
   
   ggplot() +
     ylim(0,ymax)+
-    geom_point(data=dat[dat$Label==label,], aes(x=Year, y=Estimate), size=2, colour = "grey70") +
-    geom_errorbar(data=dat[dat$Label==label,],aes(x=Year, ymin=lcl, ymax=ucl),width=0.1, colour = "grey80") +
-    geom_ribbon(data=quants, aes(x=year, ymin=Q2.5, ymax=Q97.5), fill="grey60", alpha=0.3) + # 95% CIs
-    geom_ribbon(data=quants, aes(x=year, ymin=Q7.5, ymax=Q92.5), fill="grey70", alpha=0.3) + # 85% CIs
-    geom_line(data=quants, aes(x=year, y=Q50), size=1) +
-    scale_x_continuous(breaks = c(2010,2012,2014,2016,2018,2020)) +
+    geom_point(data=dat[dat$Label==label,], aes(x=Year, y=N), size=2, colour = "grey70") +
+    geom_errorbar(data=dat[dat$Label==label,],aes(x=Year, ymin=n_lcl, ymax=n_ucl),width=0.1, colour = "grey80") +
+    geom_ribbon(data=quants, aes(x=Year, ymin=Q2.5, ymax=Q97.5), fill="grey60", alpha=0.3) + # 95% CIs
+    geom_ribbon(data=quants, aes(x=Year, ymin=Q7.5, ymax=Q92.5), fill="grey70", alpha=0.3) + # 85% CIs
+    geom_line(data=quants, aes(x=Year, y=Q50), size=1) +
+    scale_x_continuous(breaks = c(2010,2012,2014,2016,2018,2020, 2022)) +
     ggtitle(species) +
     ylab(ylab) +
     xlab("Year") +
@@ -182,10 +186,10 @@ plot95Grfun3 <- function(quants,species,label,ylab,ymax){
   
   ggplot() +
     ylim(0,ymax)+
-    geom_ribbon(data=quants, aes(x=year, ymin=Q2.5, ymax=Q97.5), fill="grey60", alpha=0.3) + # 95% CIs
-    geom_ribbon(data=quants, aes(x=year, ymin=Q7.5, ymax=Q92.5), fill="grey70", alpha=0.3) + # 85% CIs
-    geom_line(data=quants, aes(x=year, y=Q50), size=1) +
-    scale_x_continuous(breaks = c(2010,2012,2014,2016,2018,2020)) +
+    geom_ribbon(data=quants, aes(x=Year, ymin=Q2.5, ymax=Q97.5), fill="grey60", alpha=0.3) + # 95% CIs
+    geom_ribbon(data=quants, aes(x=Year, ymin=Q7.5, ymax=Q92.5), fill="grey70", alpha=0.3) + # 85% CIs
+    geom_line(data=quants, aes(x=Year, y=Q50), size=1) +
+    scale_x_continuous(breaks = c(2010,2012,2014,2016,2018,2020, 2022)) +
     ggtitle(species) +
     ylab(ylab) +
     xlab("Year") +
@@ -209,9 +213,9 @@ plot95Grfun4 <- function(dat,quants,species,label,ylab,ymax){
     ylim(0,ymax)+
     geom_point(data=dat[dat$Label==label,], aes(x=Year, y=N), size=2, colour = "grey50") +
     geom_errorbar(data=dat[dat$Label==label,],aes(x=Year, ymin=n_lcl, ymax=n_ucl),width=0.1, colour = "grey50") +
-    geom_ribbon(data=quants, aes(x=year, ymin=Q2.5, ymax=Q97.5), fill="grey60", alpha=0.3) + # 95% CIs
-    geom_line(data=quants, aes(x=year, y=Q50), size=1) +
-    scale_x_continuous(breaks = c(2010,2012,2014,2016,2018,2020)) +
+    geom_ribbon(data=quants, aes(x=Year, ymin=Q2.5, ymax=Q97.5), fill="grey60", alpha=0.3) + # 95% CIs
+    geom_line(data=quants, aes(x=Year, y=Q50), size=1) +
+    scale_x_continuous(breaks = c(2010,2012,2014,2016,2018,2020, 2022)) +
     ggtitle(species) +
     ylab(ylab) +
     xlab("Year") +
@@ -233,11 +237,11 @@ plot95Grfun5 <- function(dat,quants,species,label,ylab,ymax){
   
   ggplot() +
     ylim(0,ymax)+
-    geom_point(data=dat[dat$Label==label,], aes(x=Year, y=Estimate), size=2, colour = "grey70") +
-    geom_errorbar(data=dat[dat$Label==label,],aes(x=Year, ymin=lcl, ymax=ucl),width=0.1, colour = "grey80") +
-    geom_ribbon(data=quants, aes(x=year, ymin=Q2.5, ymax=Q97.5), fill="grey60", alpha=0.3) + # 95% CIs
-    geom_line(data=quants, aes(x=year, y=Q50), size=1, linetype="dashed") +
-    scale_x_continuous(breaks = c(2010,2012,2014,2016,2018,2020)) +
+    geom_point(data=dat[dat$Label==label,], aes(x=Year, y=N), size=2, colour = "grey70") +
+    geom_errorbar(data=dat[dat$Label==label,],aes(x=Year, ymin=n_lcl, ymax=n_ucl),width=0.1, colour = "grey80") +
+    geom_ribbon(data=quants, aes(x=Year, ymin=Q2.5, ymax=Q97.5), fill="grey60", alpha=0.3) + # 95% CIs
+    geom_line(data=quants, aes(x=Year, y=Q50), size=1, linetype="dashed") +
+    scale_x_continuous(breaks = c(2010,2012,2014,2016,2018,2020,2022)) +
     ggtitle(species) +
     ylab(ylab) +
     xlab("Year") +
@@ -281,15 +285,16 @@ trendFunc2 <- function(x){
     ## YCG ####
 
 ycg.dat <- select(ycg.dat, -X)
-ycg.dat$year <- as.numeric(ycg.dat$year)
+ycg.dat$Year <- as.numeric(ycg.dat$Year)
 str(ycg.dat)
 
 # fit gams to real estiamtes (with varying degrees of freedom)
 ycg.aic.res <- c(df1=NA, df2=NA, df3=NA)
 
 for(dfval in 1:3){
-  gib.gam.df <- gam(Estimate ~ s(Year, df=dfval), family=gaussian(link="identity"), 
+  gib.gam.df <- gam(N ~ s(Year, df=dfval), family=gaussian(link="identity"), 
                     data=ycg.dat[ycg.dat$Label=="Grp",])
+  
   ycg.aic.res[paste0("df", dfval)] <- summary(gib.gam.df)$aic }
 
 
@@ -317,11 +322,11 @@ fitspecies.func.YCG <- function(bootrep){
   
   
   # create sample.table using SampleInfo
-  sample.table <- data.frame(Sample.Label = rep(sampleInfo$Transect,times=7),
+  sample.table <- data.frame(Sample.Label = rep(sampleInfo$Transect,times=8),
                              Region.Label = rep(c("2010","2011","2013","2014","2016","2018","2020", "2022"),
                                                 each=nrow(sampleInfo)),
                              Effort = c(sampleInfo[,3],sampleInfo[,4],sampleInfo[,5],
-                                          sampleInfo[,6],sampleInfo[,7],sampleInfo[,8],sampleInfo[,9]))
+                                          sampleInfo[,6],sampleInfo[,7],sampleInfo[,8],sampleInfo[,9], sampleInfo[,10]))
   
   
   # create obs.table
@@ -334,13 +339,13 @@ fitspecies.func.YCG <- function(bootrep){
   
   
   ## fit the detection function model
-  try(detfunc <- ds(repDataSpecies, region.table = full.region.table, 
-                sample.table = sample.table, obs.table = obs.table,
+  try(detfunc <- ds(repDataSpecies, region_table = full.region.table, 
+                sample_table = sample.table, obs_table = obs.table,
                 truncation = 60, key = "hn"))
   
   
   # extract estimates
-  estimates <- detfunc$dht$individuals$N[1:7, 1:2]
+  estimates <- detfunc$dht$individuals$N[1:8, 1:2]
   estimates <- estimates %>% dplyr::rename(Year = Label) 
   estimates$Year <- as.numeric(estimates$Year)
   
@@ -361,9 +366,13 @@ ycg.bs.gams.df <- data.frame(matrix(unlist(ycg.bs.gams), nrow=100, byrow = FALSE
 # save
 write.csv(ycg.bs.gams.df, file="C:/Users/cagger/Documents/Transect sampling/Transect 2022/analysis/Pop assess/GAMs from Github/Cloned through R project/KSWS_trends/ycg.bs.gams.df.csv")
 
+#After break read back in the file 
+
+ycg.bs.gams.df <- read.csv("ycg.bs.gams.df.csv")
+
 # read
 #ycg.bs.gams.df <- read.csv("Output/Results/Trends/Bootstraps/ycg.bs.gams.df.csv")
-#ycg.bs.gams.df <- ycg.bs.gams.df %>% select(-X)
+ycg.bs.gams.df <- ycg.bs.gams.df %>% select(-X)
 
 # test what percentage of the last BS gam estimates are above the first. This is to test for a significant upward trend 
 trend.df.ycg <- data.frame(apply(ycg.bs.gams.df,2,trendFunc))
@@ -379,19 +388,19 @@ ycg.bs_ints <- ycg.bs_ints %>% rownames_to_column("quant")
 #BS_ints_tidy <- gather(BS_ints, key = "year", value = "confits", -quant)
 
 # quantiles into vectors
-ycg.quants <- data.frame(year = seq(from=2010, to=2022, length.out = 100),
+ycg.quants <- data.frame(Year = seq(from=2010, to=2022, length.out = 100),
                          Q2.5 = as.numeric(ycg.bs_ints[1,2:101]),
                          Q7.5 = as.numeric(ycg.bs_ints[2,2:101]),
                          Q50 = as.numeric(ycg.bs_ints[3,2:101]),
                          Q92.5 = as.numeric(ycg.bs_ints[4,2:101]),
                          Q97.5 = as.numeric(ycg.bs_ints[5,2:101]))
 # save quantiles
-write.csv(ycg.quants, "C:/Users/cagger/Documents/Transect sampling/Transect 2022/analysis/Pop assess/GAMs from Github/Cloned through R project/KSWS_trends/ycg.bs.gams.df.csv")
+write.csv(ycg.quants, "C:/Users/cagger/Documents/Transect sampling/Transect 2022/analysis/Pop assess/GAMs from Github/Cloned through R project/KSWS_trends/ycg.quants.csv")
 
 # load quantiles
 ycg.quants <- read.csv("C:/Users/cagger/Documents/Transect sampling/Transect 2022/analysis/Pop assess/GAMs from Github/Cloned through R project/KSWS_trends/ycg.bs.gams.df.csv")
-str(ycg.quants)
-ycg.quants <- ycg.quants[ ,-1]
+#str(ycg.quants)
+#ycg.quants <- ycg.quants[ ,-1] #these two lines were removieing the year variable and making quants almost impossible to plot
 
 
 
@@ -404,8 +413,22 @@ ycg_plot_95 <- plot95fun(ycg.dat,ycg.quants,"Yellow-cheeked crested Gibbon","Grp
 ycg_plot_85_gr <- plot85Grfun(ycg.dat,ycg.quants,"Yellow-cheeked crested Gibbon","Grp",
                               "Group abundance",1400)
 
+
+#ycg.just.ind.dat <- subset(ycg.dat, Label == "Ind")
+
 # 95% black and white
-ycg_plot_95_gr <- plot95Grfun(ycg.dat,ycg.quants,"Yellow-cheeked crested gibbon","Ind",
+#ycg_plot_95_gr <-
+
+#Experimenting and timsing all the values in a column by 1,000,000 to see if will then show up on the plot 
+
+ycg.quants$Q2.5 <- ycg.quants$Q2.5 * 1000000
+ycg.quants$Q7.5 <- ycg.quants$Q7.5 * 1000000
+ycg.quants$Q50 <- ycg.quants$Q50 * 1000000
+ycg.quants$Q92.5 <- ycg.quants$Q92.5 * 1000000  
+ycg.quants$Q97.5 <- ycg.quants$Q97.5 * 1000000
+
+
+plot95Grfun(ycg.dat,ycg.quants,"Yellow-cheeked crested gibbon","Ind",
                               "Individual abundance",3100)
 
 

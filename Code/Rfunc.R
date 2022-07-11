@@ -10,7 +10,7 @@ library('patchwork')
 library('DescTools')
 
 ## load data (allData). This is the master data from the CDS analysis
-load("./Output/Data/KSWS_MASTER.Rdata")
+load("C:/Users/cagger/Documents/Transect sampling/Transect 2022/analysis/Pop assess/GAMs from Github/Cloned through R project/KSWS_trends/Data/KSWS_MASTER.Rdata")
 ## In this dataframe, stratum == year.
 
 ## Remove T20 from allData and obs.table
@@ -109,7 +109,7 @@ createEffortData.func <- function(filename){
 
         ## load in data that has effort
         eff_dat <- read.csv(filename, header = TRUE)
-        eff_dat <- eff_dat[,-1]
+        #eff_dat <- eff_dat[,-1]
         eff_dat <- eff_dat[eff_dat$Sample.Label !=20,] # remove T20
         eff_dat$Region.Label <- as.character(eff_dat$Region.Label)
 
@@ -122,7 +122,7 @@ createEffortData.func <- function(filename){
         eff_dat$Region.Label[eff_dat$Region.Label=="2016_L"] <- "2016"
 
         ## "widen" the data so that each year has its own column and "effort" is the value
-        eff_dat.2 <- pivot_wider(eff_dat, id_cols = c("Sample.Label","Region.Label"), names_from = Region.Label,
+        eff_dat.2 <- pivot_wider(eff_dat, id_cols = c("Sample.Label"), names_from = Region.Label,
                                  values_from = Effort)
 
         ## I need to allocate a broad habitat class to each transect.  Obviously this will not capture the fine-scale habitat hetergeneity within transects, but the only reason we are doing this is to account for the spatial trends in species for the bootstrapping (see Rachel's e-mail).  By splitting the transects by broad habitat category, we will be capturing all of the spatial trends amongst species. i.e. all of the species have either low density in dense forest (D) areas and high density in open forest (O) areas, or vice versa.  Therefore by splitting the transects by those categories, we are are capturing the transects that have either high or low density for each species.  I will allocate habitat category based on the land cover layer in QGIS. The results are as follows:
@@ -432,3 +432,4 @@ bootstrap.plot <- function(bootres, plotwhat="Sightings", habitat="All", obsdat=
 }
 
 ###############################################################
+
