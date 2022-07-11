@@ -432,17 +432,19 @@ plot95Grfun(ycg.dat,ycg.quants,"Yellow-cheeked crested gibbon","Ind",
                               "Individual abundance",3100)
 
 
+################################################################################################################################################################################
+
     ## GSL ####
 
 gsl.dat <- select(gsl.dat, -X)
-gsl.dat$year <- as.numeric(gsl.dat$year)
+gsl.dat$Year <- as.numeric(gsl.dat$Year)
 str(gsl.dat)
 
 # fit gams to real estiamtes (with varying degrees of freedom)
 gsl.aic.res <- c(df1=NA, df2=NA, df3=NA)
 
 for(dfval in 1:3){
-  gsl.gam.df <- gam(Estimate ~ s(Year, df=dfval), family=gaussian(link="identity"), 
+  gsl.gam.df <- gam(N ~ s(Year, df=dfval), family=gaussian(link="identity"), 
                     data=gsl.dat[gsl.dat$Label=="Grp",])
   gsl.aic.res[paste0("df", dfval)] <- summary(gsl.gam.df)$aic }
 
@@ -466,11 +468,11 @@ fitspecies.func.GSL <- function(bootrep){
   
   
   # create sample.table using SampleInfo
-  sample.table <- data.frame(Sample.Label = rep(sampleInfo$Transect,times=7),
-                             Region.Label = rep(c("2010","2011","2013","2014","2016","2018","2020"),
+  sample.table <- data.frame(Sample.Label = rep(sampleInfo$Transect,times=8),
+                             Region.Label = rep(c("2010","2011","2013","2014","2016","2018","2020", "2022"),
                                                 each=nrow(sampleInfo)),
                              Effort = c(sampleInfo[,3],sampleInfo[,4],sampleInfo[,5],
-                                          sampleInfo[,6],sampleInfo[,7],sampleInfo[,8],sampleInfo[,9]))
+                                          sampleInfo[,6],sampleInfo[,7],sampleInfo[,8],sampleInfo[,9],sampleInfo[,10]))
   
   
   # create obs.table
@@ -483,8 +485,8 @@ fitspecies.func.GSL <- function(bootrep){
   
   
   ## fit the detection function model
-  try(detfunc <- ds(repDataSpecies, region.table = full.region.table, 
-                sample.table = sample.table, obs.table = obs.table,
+  try(detfunc <- ds(repDataSpecies, region_table = full.region.table, 
+                sample_table = sample.table, obs_table = obs.table,
                 truncation = 60, key = "hn",cutpoints = c(0,10,19,30,50,60)))
   
   
@@ -495,7 +497,7 @@ fitspecies.func.GSL <- function(bootrep){
   
   # fit a GAM & predict
   gamfit <- gam(Estimate ~ s(Year, df=1), family=gaussian(link="identity"), data = estimates)
-  newdata <- data.frame(Year = seq(from=2010, to=2020, length.out = 100))
+  newdata <- data.frame(Year = seq(from=2010, to=2022, length.out = 100))
   pred <- predict.Gam(gamfit, newdata = newdata, type = "response")
   gampred <- data.frame(pred)
   
@@ -508,7 +510,7 @@ system.time(gsl.bs.gams <- lapply(1:length(boot.res), fitspecies.func.GSL)) # 2 
 gsl.bs.gams.df <- data.frame(matrix(unlist(gsl.bs.gams), nrow=100, byrow = FALSE))
 
 # save (to avoid having to re-run)
-write.csv(gsl.bs.gams.df, file="Output/Results/Trends/Bootstraps/gsl.bs.gams.df.csv")
+write.csv(gsl.bs.gams.df, file="gsl.bs.gams.df.csv")
 
 # load
 #gsl.bs.gams.df <- read.csv("Output/Results/Trends/Bootstraps/gsl.bs.gams.df.csv")
@@ -527,21 +529,30 @@ gsl.bs_ints <- gsl.bs_ints %>% rownames_to_column("quant")
 #BS_ints_tidy <- gather(BS_ints, key = "year", value = "confits", -quant)
 
 # quantiles into vectors
-gsl.quants <- data.frame(year = seq(from=2010, to=2020, length.out = 100),
+gsl.quants <- data.frame(Year = seq(from=2010, to=2022, length.out = 100),
                          Q2.5 = as.numeric(gsl.bs_ints[1,2:101]),
                          Q7.5 = as.numeric(gsl.bs_ints[2,2:101]),
                          Q50 = as.numeric(gsl.bs_ints[3,2:101]),
                          Q92.5 = as.numeric(gsl.bs_ints[4,2:101]),
                          Q97.5 = as.numeric(gsl.bs_ints[5,2:101]))
 # save quantiles
-write.csv(gsl.quants, "Output/Results/Plots/BS_quants/gsl.quants.csv")
+write.csv(gsl.quants, "gsl.quants.csv")
 
 # load quantiles
-gsl.quants <- read.csv("Output/Results/Plots/BS_quants/gsl.quants.csv")
+gsl.quants <- read.csv("gsl.quants.csv")
 gsl.quants <- gsl.quants[ ,-1]
 
 
 ### plots
+
+
+#Times the quant by 1 million so in the same units as population estimates 
+
+gsl.quants$Q2.5 <- gsl.quants$Q2.5 * 1000000
+gsl.quants$Q7.5 <- gsl.quants$Q7.5 * 1000000
+gsl.quants$Q50 <- gsl.quants$Q50 * 1000000
+gsl.quants$Q92.5 <- gsl.quants$Q92.5 * 1000000  
+gsl.quants$Q97.5 <- gsl.quants$Q97.5 * 1000000
 
 # 95% colour
 gsl_plot_95 <- plot95fun(gsl.dat,gsl.quants,"Silver langur","Grp","Group abundance",2500)
