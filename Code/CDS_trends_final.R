@@ -267,7 +267,7 @@ trendFunc <- function(x){
   ifelse(x[1] < x[100], "positive", "negative")
 }
 
-# function to apply trendFunc to a single dataframe within a list (see "Trends" section)
+# function to apply trendFunc to a single dataframe within a list (see "Trends" section) ##This is what searches if pos or neg after fit models to all bootstrap dataframes############MAYBE PROBLEM WITH WEIRD LOOKING GAMs IN HERE. 
 calcfun <- function(c){
   df <- data.frame(apply(c,2,trendFunc))
   tbl <- table(df)
@@ -403,23 +403,7 @@ ycg.quants <- read.csv("C:/Users/cagger/Documents/Transect sampling/Transect 202
 #ycg.quants <- ycg.quants[ ,-1] #these two lines were removieing the year variable and making quants almost impossible to plot
 
 
-
 ### plots
-
-# 95% CIs, colour
-ycg_plot_95 <- plot95fun(ycg.dat,ycg.quants,"Yellow-cheeked crested Gibbon","Grp","Group abundance",1400)
-
-# 95 & 85% CIs, black and white
-ycg_plot_85_gr <- plot85Grfun(ycg.dat,ycg.quants,"Yellow-cheeked crested Gibbon","Grp",
-                              "Group abundance",1400)
-
-
-#ycg.just.ind.dat <- subset(ycg.dat, Label == "Ind")
-
-# 95% black and white
-#ycg_plot_95_gr <-
-
-#Experimenting and timsing all the values in a column by 1,000,000 to see if will then show up on the plot 
 
 ycg.quants$Q2.5 <- ycg.quants$Q2.5 * 1000000
 ycg.quants$Q7.5 <- ycg.quants$Q7.5 * 1000000
@@ -427,9 +411,19 @@ ycg.quants$Q50 <- ycg.quants$Q50 * 1000000
 ycg.quants$Q92.5 <- ycg.quants$Q92.5 * 1000000  
 ycg.quants$Q97.5 <- ycg.quants$Q97.5 * 1000000
 
+# 95% CIs, colour
+ycg_plot_95 <- plot95fun(ycg.dat,ycg.quants,"Yellow-cheeked crested Gibbon","Grp","Group abundance",1400)
+print(ycg_plot_95)
 
+# 95 & 85% CIs, black and white
+ycg_plot_85_gr <- plot85Grfun(ycg.dat,ycg.quants,"Yellow-cheeked crested Gibbon","Grp",
+                              "Group abundance",1400)
+print(ycg_plot_85_gr)
+
+# 95% black and white
 plot95Grfun(ycg.dat,ycg.quants,"Yellow-cheeked crested gibbon","Ind",
                               "Individual abundance",3100)
+
 
 
 ################################################################################################################################################################################
@@ -496,7 +490,7 @@ fitspecies.func.GSL <- function(bootrep){
   estimates$Year <- as.numeric(estimates$Year)
   
   # fit a GAM & predict
-  gamfit <- gam(Estimate ~ s(Year, df=1), family=gaussian(link="identity"), data = estimates)
+  gamfit <- gam(Estimate ~ s(Year, df=3), family=gaussian(link="identity"), data = estimates)
   newdata <- data.frame(Year = seq(from=2010, to=2022, length.out = 100))
   pred <- predict.Gam(gamfit, newdata = newdata, type = "response")
   gampred <- data.frame(pred)
@@ -512,9 +506,13 @@ gsl.bs.gams.df <- data.frame(matrix(unlist(gsl.bs.gams), nrow=100, byrow = FALSE
 # save (to avoid having to re-run)
 write.csv(gsl.bs.gams.df, file="gsl.bs.gams.df.csv")
 
+#Read the model back in 
+
+gsl.bs.gams.df <- read.csv("gsl.bs.gams.df.csv")
+
 # load
 #gsl.bs.gams.df <- read.csv("Output/Results/Trends/Bootstraps/gsl.bs.gams.df.csv")
-#gsl.bs.gams.df <- gsl.bs.gams.df[ ,-1]
+#gsl.bs.gams.df <- gsl.bs.gams.df[ ,-1] Removed this part of code because it was removing the year column in quants and making them imporrible to plot 
 
 # test what percentage of the last BS gam estimates are above the first. This is to test for a significant upward trend 
 trend.df <- data.frame(apply(gsl.bs.gams.df,2,trendFunc))
@@ -1122,14 +1120,14 @@ stm.95 <- ggplot() +
     ## BSD ####
 
 bsd.dat <- select(bsd.dat, -X)
-bsd.dat$year <- as.numeric(bsd.dat$year)
+bsd.dat$year <- as.numeric(bsd.dat$Year)
 str(bsd.dat)
 
 # fit gams to real estiamtes (with varying degrees of freedom)
 bsd.aic.res <- c(df1=NA, df2=NA, df3=NA)
 
 for(dfval in 1:3){
-  bsd.gam.df <- gam(Estimate ~ s(Year, df=dfval), family=gaussian(link="identity"), 
+  bsd.gam.df <- gam(N ~ s(Year, df=dfval), family=gaussian(link="identity"), 
                     data=bsd.dat[bsd.dat$Label=="Grp",])
   bsd.aic.res[paste0("df", dfval)] <- summary(bsd.gam.df)$aic }
 
@@ -1155,11 +1153,11 @@ fitspecies.func.BSD <- function(bootrep){
   
   
   # create sample.table using SampleInfo
-  sample.table <- data.frame(Sample.Label = rep(sampleInfo$Transect,times=7),
-                             Region.Label = rep(c("2010","2011","2013","2014","2016","2018","2020"),
+  sample.table <- data.frame(Sample.Label = rep(sampleInfo$Transect,times=8),
+                             Region.Label = rep(c("2010","2011","2013","2014","2016","2018","2020", "2022"),
                                                 each=nrow(sampleInfo)),
                              Effort = c(sampleInfo[,3],sampleInfo[,4],sampleInfo[,5],
-                                          sampleInfo[,6],sampleInfo[,7],sampleInfo[,8],sampleInfo[,9]))
+                                          sampleInfo[,6],sampleInfo[,7],sampleInfo[,8],sampleInfo[,9],sampleInfo[,10]))
   
   
   # create obs.table
@@ -1172,19 +1170,19 @@ fitspecies.func.BSD <- function(bootrep){
   
   
   ## fit the detection function model. For BSD, I looked at the most common key function from all the annual analyses, and Hn is the most common. Therefore that is what will be used here.I have also not used any bins, because in the CDS anlaysis there are more years that are not binned than are binned. The most common truncation distance is 50m and so that will be used.
-  try(detfunc <- ds(repDataSpecies, region.table = full.region.table, 
-                sample.table = sample.table, obs.table = obs.table,
+  try(detfunc <- ds(repDataSpecies, region_table = full.region.table, 
+                sample_table = sample.table, obs_table = obs.table,
                 truncation = 50, key = "hn"))
   
   
   # extract estimates
-  estimates <- detfunc$dht$individuals$N[1:7, 1:2]
+  estimates <- detfunc$dht$individuals$N[1:8, 1:2]
   estimates <- estimates %>% dplyr::rename(Year = Label) 
   estimates$Year <- as.numeric(estimates$Year)
   
   # fit a GAM & predict
   gamfit <- gam(Estimate ~ s(Year, df=2), family=gaussian(link="identity"), data = estimates)
-  newdata <- data.frame(Year = seq(from=2010, to=2020, length.out = 100))
+  newdata <- data.frame(Year = seq(from=2010, to=2022, length.out = 100))
   pred <- predict.Gam(gamfit, newdata = newdata, type = "response")
   gampred <- data.frame(pred)
   
@@ -1197,11 +1195,11 @@ system.time(bsd.bs.gams <- lapply(1:length(boot.res), fitspecies.func.BSD))
 bsd.bs.gams.df <- data.frame(matrix(unlist(bsd.bs.gams), nrow=100, byrow = FALSE))
 
 # save (to avoid having to re-run)
-write.csv(bsd.bs.gams.df, file="Output/Results/Trends/Bootstraps/bsd.bs.gams.df.csv")
+write.csv(bsd.bs.gams.df, file="C:/Users/cagger/Documents/Transect sampling/Transect 2022/analysis/Pop assess/GAMs from Github/Cloned through R project/KSWS_trends/bsd.bs.gams.df.csv")
 
 # load
-bsd.bs.gams.df <- read.csv("Output/Results/Trends/Bootstraps/bsd.bs.gams.df.csv")
-bsd.bs.gams.df <- bsd.bs.gams.df[ ,-1]
+bsd.bs.gams.df <- read.csv("bsd.bs.gams.df.csv")
+#bsd.bs.gams.df <- bsd.bs.gams.df[ ,-1]
 
 # test what percentage of the last BS gam estimates are above the first. This is to test for a significant upward trend
 trend.df <- data.frame(apply(bsd.bs.gams.df,2,trendFunc))
@@ -1217,7 +1215,7 @@ bsd.bs_ints <- bsd.bs_ints %>% rownames_to_column("quant")
 #BS_ints_tidy <- gather(BS_ints, key = "year", value = "confits", -quant)
 
 # quantiles into vectors
-bsd.quants <- data.frame(year = seq(from=2010, to=2020, length.out = 100),
+bsd.quants <- data.frame(Year = seq(from=2010, to=2022, length.out = 100),
                          Q2.5 = as.numeric(bsd.bs_ints[1,2:101]),
                          Q7.5 = as.numeric(bsd.bs_ints[2,2:101]),
                          Q50 = as.numeric(bsd.bs_ints[3,2:101]),
@@ -1225,22 +1223,31 @@ bsd.quants <- data.frame(year = seq(from=2010, to=2020, length.out = 100),
                          Q97.5 = as.numeric(bsd.bs_ints[5,2:101]))
 
 # save quantiles
-write.csv(bsd.quants, "Output/Results/Plots/BS_quants/bsd.quants.csv")
+write.csv(bsd.quants, "bsd.quants.csv")
 
 # load quantiles
-bsd.quants <- read.csv("Output/Results/Plots/BS_quants/bsd.quants.csv")
+bsd.quants <- read.csv("bsd.quants.csv")
 
 
 ### plots
 
+bsd.quants$Q2.5 <- bsd.quants$Q2.5 * 1000000
+bsd.quants$Q7.5 <- bsd.quants$Q7.5 * 1000000
+bsd.quants$Q50 <- bsd.quants$Q50 * 1000000
+bsd.quants$Q92.5 <- bsd.quants$Q92.5 * 1000000  
+bsd.quants$Q97.5 <- bsd.quants$Q97.5 * 1000000
+
 # 95% colour
 bsd_plot_95 <- plot95fun(bsd.dat,bsd.quants,"Black-shanked douc","Grp","Group abundance",17000)
+print(bsd_plot_95)
 
 # 95 & 85% black and white
 bsd_plot_85_gr <- plot85Grfun(bsd.dat,bsd.quants,"Black-shanked douc","Grp","Group abundance",17000)
+print(bsd_plot_85_gr)
 
 # 95% black and white
-bsd_plot_95_gr <- plot95Grfun(bsd.dat,bsd.quants,"Black-shanked douc","Ind","Group abundance",50500)
+bsd_plot_95_gr <- plot95Grfun(bsd.dat,bsd.quants,"Black-shanked douc","Ind","Individual abundance",50500)
+print(bsd_plot_95_gr)
 
 
     ## BTG ####

@@ -186,7 +186,7 @@ bootstrap.func <- function(obsdat=allData, effdat=eff_dat.2, Nrep=1000, method=2
 
         ## -------------------------------------------------------------------------------------------------
         ## Preliminary calculations of total effort per year in each habitat category:
-        effnames <- c("eff_10", "eff_11", "eff_13", "eff_14", "eff_16", "eff_18", "eff_20")
+        effnames <- c("eff_10", "eff_11", "eff_13", "eff_14", "eff_16", "eff_18", "eff_20", "eff_22")
         ## Create a list which contains the rows of effdat organised by habitat: these are the equivalents of Matt's
         ## df_dense, df_open, and df_nonf.  Putting them in a list means we can access them in a loop over habitats
         ## instead of having to go through each habitat separately.
