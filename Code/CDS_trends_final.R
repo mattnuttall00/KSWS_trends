@@ -14,6 +14,11 @@ full.region.table <- read.csv("Data/full.region.table.csv")
 ## Create effort data "eff_dat.2":
 eff_dat.2 <- createEffortData.func(filename="Data/sample.table.csv")
 
+#Remove NA rows from region.table and sample.table 
+
+region.table <- region.table[!is.na(region.table$Area),]
+sample.table <- sample.table[!is.na(sample.table$Effort),]
+
 #### Run bootstrap ####
 
 
