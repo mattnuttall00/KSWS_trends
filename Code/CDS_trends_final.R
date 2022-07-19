@@ -5,7 +5,7 @@
 
 
 ## sources R code and libraries, and loads the allData data-frame
-source("Rfunc.R")   
+source("Code/Rfunc.R")   
 
 ## Read in full.region.table
 
@@ -25,7 +25,7 @@ sample.table <- sample.table[!is.na(sample.table$Effort),]
 ## Run bootstrap: this generates n replicates using method 2.
 ## Method 2 = stop when overall effort in each habitat across years reaches or exceeds that in the real data.
 set.seed(123)
-boot.res <- bootstrap.func(Nrep=2000, method=2) # 
+boot.res <- bootstrap.func(Nrep=300, method=2) # 
 
 
 # explore the data
@@ -36,6 +36,31 @@ head(boot.res[[1]]$sampleInfo)
 boot.res[[5]]$sampleInfo[12,]
 
 unique(boot.res[[5]]$repData$obs.transectOrig[boot.res[[5]]$repData$Transect==12])
+
+
+
+
+### This section (up to line 62) had been removed because when I did this analysis previously I removed the priority strata from the KSWS_MASTER.Rdata prior to running this part of the analysis. But originally, I hadn't done that so removed the strata here at this stage. I have added the code again so that you can choose whether to remove the strata from the master data, or here once you've run the bootstrap.
+
+## The "stratum" column in each dataframe of boot.res still has the priority strata, which we need to remove and then make numeric for incusion as a linear predictor in some detection function models
+
+# change the column from factor to character
+boot.res <- lapply(boot.res, function(x) {x$repData$stratum <- as.character(x$repData$stratum);x})
+
+# remove strata
+boot.res <- lapply(boot.res, function(x) {
+  x$repData$stratum[x$repData$stratum=="2011_H"] <- "2011"
+  x$repData$stratum[x$repData$stratum=="2011_L"] <- "2011"
+  x$repData$stratum[x$repData$stratum=="2014_H"] <- "2014"
+  x$repData$stratum[x$repData$stratum=="2014_L"] <- "2014"
+  x$repData$stratum[x$repData$stratum=="2016_H"] <- "2016"
+  x$repData$stratum[x$repData$stratum=="2016_L"] <- "2016"
+  ;x})
+
+boot.res <- lapply(boot.res, function(x) {x$repData$stratum <- as.numeric(x$repData$stratum);x})
+
+str(boot.res[[20]]$repData)
+unique(boot.res[[20]]$repData$stratum)
 
   ## Plot bootstrap results ####
 
@@ -344,8 +369,8 @@ fitspecies.func.YCG <- function(bootrep){
   
   
   ## fit the detection function model
-  try(detfunc <- ds(repDataSpecies, region_table = full.region.table, 
-                sample_table = sample.table, obs_table = obs.table,
+  try(detfunc <- ds(repDataSpecies, region.table = full.region.table, 
+                sample.table = sample.table, obs.table = obs.table,
                 truncation = 60, key = "hn"))
   
   
@@ -369,7 +394,7 @@ system.time(ycg.bs.gams <- lapply(1:length(boot.res), fitspecies.func.YCG)) #70 
 ycg.bs.gams.df <- data.frame(matrix(unlist(ycg.bs.gams), nrow=100, byrow = FALSE))
 
 # save
-write.csv(ycg.bs.gams.df, file="C:/Users/cagger/Documents/Transect sampling/Transect 2022/analysis/Pop assess/GAMs from Github/Cloned through R project/KSWS_trends/ycg.bs.gams.df.csv")
+write.csv(ycg.bs.gams.df, file="Outputs/Matt_ycg.bs.gams.df.csv")
 
 #After break read back in the file 
 
@@ -400,7 +425,7 @@ ycg.quants <- data.frame(Year = seq(from=2010, to=2022, length.out = 100),
                          Q92.5 = as.numeric(ycg.bs_ints[4,2:101]),
                          Q97.5 = as.numeric(ycg.bs_ints[5,2:101]))
 # save quantiles
-write.csv(ycg.quants, "C:/Users/cagger/Documents/Transect sampling/Transect 2022/analysis/Pop assess/GAMs from Github/Cloned through R project/KSWS_trends/ycg.quants.csv")
+write.csv(ycg.quants, "Outputs/Matt_ycg.quants.csv")
 
 # load quantiles
 ycg.quants <- read.csv("C:/Users/cagger/Documents/Transect sampling/Transect 2022/analysis/Pop assess/GAMs from Github/Cloned through R project/KSWS_trends/ycg.bs.gams.df.csv")
@@ -417,7 +442,7 @@ ycg.quants$Q92.5 <- ycg.quants$Q92.5 * 1000000
 ycg.quants$Q97.5 <- ycg.quants$Q97.5 * 1000000
 
 # 95% CIs, colour
-ycg_plot_95 <- plot95fun(ycg.dat,ycg.quants,"Yellow-cheeked crested Gibbon","Grp","Group abundance",1400)
+ycg_plot_95 <- plot95fun(ycg.dat,ycg.quants,"Yellow-cheeked crested Gibbon","Grp","Group abundance",2500)
 print(ycg_plot_95)
 
 # 95 & 85% CIs, black and white
