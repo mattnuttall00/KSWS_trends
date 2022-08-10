@@ -5,7 +5,7 @@
 
 
 ## sources R code and libraries, and loads the allData data-frame
-source("Code/Rfunc.R")   
+  source("Code/Rfunc.R")   
 
 ## Read in full.region.table
 
@@ -25,7 +25,7 @@ sample.table <- sample.table[!is.na(sample.table$Effort),]
 ## Run bootstrap: this generates n replicates using method 2.
 ## Method 2 = stop when overall effort in each habitat across years reaches or exceeds that in the real data.
 set.seed(123)
-boot.res <- bootstrap.func(Nrep=300, method=2) # 
+boot.res <- bootstrap.func(Nrep=2000, method=2) # 
 
 
 # explore the data
@@ -100,7 +100,7 @@ gsl.dat <- read.csv("Data/CDS_results/GSL_results_final_binned.csv", header = TR
 ltm.dat <- read.csv("Data/CDS_results/LTM_results_final_binned.csv", header = TRUE)
 pig.dat <- read.csv("Data/CDS_results/PIG_results_final_binned.csv", header = TRUE)
 ptm.dat <- read.csv("Data/CDS_results/PTM_results_final.csv",        header = TRUE)
-rmj.dat <- read.csv("Data/CDS_results/RMJ_results_final_binned.csv", header = TRUE)
+red.dat <- read.csv("Data/CDS_results/RMJ_results_final_binned.csv", header = TRUE)
 stm.dat <- read.csv("Data/CDS_results/STM_results_final.csv",        header = TRUE)
 
 
@@ -169,19 +169,18 @@ plot85Grfun <- function(dat,quants,species,label,ylab,ymax){
 plot95Grfun <- function(dat,quants,species,label,ylab,ymax){
   
   ggplot()+
-    ylim(0,ymax)+
-    geom_point(data=dat[dat$Label==label,], aes(x=Year, y=N), size=3.5)+
+     geom_point(data=dat[dat$Label==label,], aes(x=Year, y=N), size=3.5)+
     geom_errorbar(data=dat[dat$Label==label,],aes(x=Year, ymin=n_lcl, ymax=n_ucl),width=0.2)+
     geom_line(data=quants, aes(x=Year, y=Q50), size=1)+
     geom_line(data=quants, aes(x=Year, y=Q2.5), linetype="dotted", size=0.8)+
     geom_line(data=quants, aes(x=Year, y=Q97.5), linetype="dotted", size=0.8)+
-    scale_x_continuous(breaks = c(2010,2011,2013,2014,2016,2018,2020, 2022))+
+    scale_x_continuous(breaks = c(2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022))+
+    scale_y_continuous(limits = c(0, NA), breaks = scales::pretty_breaks(n = 6)) +
     theme(panel.background = element_blank())+
     theme(axis.line = element_line(colour = "black"))+
     ggtitle(species)+
     ylab(ylab)+
     xlab("Year")
-  
 }
 
 # 85 and 95% CIs, black and white, faded points, ribbon CIs
@@ -369,8 +368,8 @@ fitspecies.func.YCG <- function(bootrep){
   
   
   ## fit the detection function model
-  try(detfunc <- ds(repDataSpecies, region.table = full.region.table, 
-                sample.table = sample.table, obs.table = obs.table,
+  try(detfunc <- ds(repDataSpecies, region_table = full.region.table, 
+                sample_table = sample.table, obs_table = obs.table,
                 truncation = 60, key = "hn"))
   
   
@@ -380,7 +379,7 @@ fitspecies.func.YCG <- function(bootrep){
   estimates$Year <- as.numeric(estimates$Year)
   
   # fit a GAM & predict
-  gamfit <- gam(Estimate ~ s(Year, df=1), family=gaussian(link="identity"), data = estimates)
+  gamfit <- gam(Estimate ~ s(Year, df=2), family=gaussian(link="identity"), data = estimates)
   newdata <- data.frame(Year = seq(from=2010, to=2022, length.out = 100))
   pred <- predict.Gam(gamfit, newdata = newdata, type = "response")
   gampred <- data.frame(pred)
@@ -394,7 +393,7 @@ system.time(ycg.bs.gams <- lapply(1:length(boot.res), fitspecies.func.YCG)) #70 
 ycg.bs.gams.df <- data.frame(matrix(unlist(ycg.bs.gams), nrow=100, byrow = FALSE))
 
 # save
-write.csv(ycg.bs.gams.df, file="Outputs/Matt_ycg.bs.gams.df.csv")
+write.csv(ycg.bs.gams.df, file="ycg.bs.gams.df.csv")
 
 #After break read back in the file 
 
@@ -425,10 +424,10 @@ ycg.quants <- data.frame(Year = seq(from=2010, to=2022, length.out = 100),
                          Q92.5 = as.numeric(ycg.bs_ints[4,2:101]),
                          Q97.5 = as.numeric(ycg.bs_ints[5,2:101]))
 # save quantiles
-write.csv(ycg.quants, "Outputs/Matt_ycg.quants.csv")
+write.csv(ycg.quants, "ycg.quants.csv")
 
 # load quantiles
-ycg.quants <- read.csv("C:/Users/cagger/Documents/Transect sampling/Transect 2022/analysis/Pop assess/GAMs from Github/Cloned through R project/KSWS_trends/ycg.bs.gams.df.csv")
+ycg.quants <- read.csv("ycg.bs.gams.df.csv")
 #str(ycg.quants)
 #ycg.quants <- ycg.quants[ ,-1] #these two lines were removieing the year variable and making quants almost impossible to plot
 
@@ -451,10 +450,9 @@ ycg_plot_85_gr <- plot85Grfun(ycg.dat,ycg.quants,"Yellow-cheeked crested Gibbon"
 print(ycg_plot_85_gr)
 
 # 95% black and white
-plot95Grfun(ycg.dat,ycg.quants,"Yellow-cheeked crested gibbon","Ind",
+plot <- plot95Grfun(ycg.dat,ycg.quants,"Yellow-cheeked crested gibbon","Ind",
                               "Individual abundance",3100)
-
-
+print(plot)
 
 ################################################################################################################################################################################
 
@@ -515,12 +513,12 @@ fitspecies.func.GSL <- function(bootrep){
   
   
   # extract estimates
-  estimates <- detfunc$dht$individuals$N[1:7, 1:2]
+  estimates <- detfunc$dht$individuals$N[1:8, 1:2]
   estimates <- estimates %>% dplyr::rename(Year = Label) 
   estimates$Year <- as.numeric(estimates$Year)
   
   # fit a GAM & predict
-  gamfit <- gam(Estimate ~ s(Year, df=3), family=gaussian(link="identity"), data = estimates)
+  gamfit <- gam(Estimate ~ s(Year, df=2), family=gaussian(link="identity"), data = estimates)
   newdata <- data.frame(Year = seq(from=2010, to=2022, length.out = 100))
   pred <- predict.Gam(gamfit, newdata = newdata, type = "response")
   gampred <- data.frame(pred)
@@ -589,10 +587,10 @@ gsl_plot_95 <- plot95fun(gsl.dat,gsl.quants,"Silver langur","Grp","Group abundan
 gsl_plot_85_gr <- plot85Grfun(gsl.dat,gsl.quants,"Silver langur","Grp","Group abundance",2500)
 
 # 95% black and white
-gsl_plot_95_gr <- plot95Grfun(gsl.dat,gsl.quants,"Silver langur","Ind","Group abundance",10500)
+gsl_plot_95_gr <- plot95Grfun(gsl.dat,gsl.quants,"Silver langur","Ind","Group individual abundance",10500)
+print(gsl_plot_95_gr)
 
-
-    ## LTM ####
+    ## LTM ###################################################################################################################################################################
 
 ltm.dat <- select(ltm.dat, -X)
 ltm.dat$year <- as.numeric(ltm.dat$year)
@@ -602,7 +600,7 @@ str(ltm.dat)
 ltm.aic.res <- c(df1=NA, df2=NA, df3=NA)
 
 for(dfval in 1:3){
-  ltm.gam.df <- gam(Estimate ~ s(Year, df=dfval), family=gaussian(link="identity"), data=ltm.dat[ltm.dat$Label=="Grp",])
+  ltm.gam.df <- gam(N ~ s(Year, df=dfval), family=gaussian(link="identity"), data=ltm.dat[ltm.dat$Label=="Grp",])
   ltm.aic.res[paste0("df", dfval)] <- summary(ltm.gam.df)$aic }
 
 # Choose the fit with lowest AIC:
@@ -626,11 +624,11 @@ fitspecies.func.LTM <- function(bootrep){
   
   
   # create sample.table using SampleInfo
-  sample.table <- data.frame(Sample.Label = rep(sampleInfo$Transect,times=7),
-                             Region.Label = rep(c("2010","2011","2013","2014","2016","2018","2020"),
+  sample.table <- data.frame(Sample.Label = rep(sampleInfo$Transect,times=8),
+                             Region.Label = rep(c("2010","2011","2013","2014","2016","2018","2020", "2022"),
                                                 each=nrow(sampleInfo)),
                              Effort = c(sampleInfo[,3],sampleInfo[,4],sampleInfo[,5],
-                                          sampleInfo[,6],sampleInfo[,7],sampleInfo[,8],sampleInfo[,9]))
+                                          sampleInfo[,6],sampleInfo[,7],sampleInfo[,8],sampleInfo[,9], sampleInfo[,10]))
   
   
   # create obs.table
@@ -643,35 +641,35 @@ fitspecies.func.LTM <- function(bootrep){
   
   
   ## fit the detection function model
-  try(detfunc <- ds(repDataSpecies, region.table = full.region.table, 
-                sample.table = sample.table, obs.table = obs.table,
+  try(detfunc <- ds(repDataSpecies, region_table = full.region.table, 
+                sample_table = sample.table, obs_table = obs.table,
                 truncation = 50, key = "hn",cutpoints = c(0,10,20,27,35,50)))
   
   
   # extract estimates
-  estimates <- detfunc$dht$individuals$N[1:7, 1:2]
+  estimates <- detfunc$dht$individuals$N[1:8, 1:2]
   estimates <- estimates %>% dplyr::rename(Year = Label) 
   estimates$Year <- as.numeric(estimates$Year)
   
   # fit a GAM & predict
   gamfit <- gam(Estimate ~ s(Year, df=1), family=gaussian(link="identity"), data = estimates)
-  newdata <- data.frame(Year = seq(from=2010, to=2020, length.out = 100))
+  newdata <- data.frame(Year = seq(from=2010, to=2022, length.out = 100))
   pred <- predict.Gam(gamfit, newdata = newdata, type = "response")
   gampred <- data.frame(pred)
   
 }
 
-## Call fitspecies.func to fit GAM to all replicates in boot.res
+## Call fitspecies.func to fit GAM to all replicates in boot.re
 system.time(ltm.bs.gams <- lapply(1:length(boot.res), fitspecies.func.LTM))
 
 # put output list into a dataframe
 ltm.bs.gams.df <- data.frame(matrix(unlist(ltm.bs.gams), nrow=100, byrow = FALSE))
 
 # save (to avoid having to re-run)
-write.csv(ltm.bs.gams.df, file="Output/Results/Trends/Bootstraps/ltm.bs.gams.df.csv")
+write.csv(ltm.bs.gams.df, file="ltm.bs.gams.df.csv")
 
 # load (if required)
-#ltm.bs.gams.df <- read.csv("Output/Results/Trends/Bootstraps/ltm.bs.gams.df.csv")
+ltm.bs.gams.df <- read.csv("ltm.bs.gams.df.csv")
 #ltm.bs.gams.df <- ltm.bs.gams.df[ ,-1]
 
 
@@ -689,7 +687,7 @@ ltm.bs_ints <- ltm.bs_ints %>% rownames_to_column("quant")
 #BS_ints_tidy <- gather(BS_ints, key = "year", value = "confits", -quant)
 
 # quantiles into vectors
-ltm.quants <- data.frame(year = seq(from=2010, to=2020, length.out = 100),
+ltm.quants <- data.frame(Year = seq(from=2010, to=2022, length.out = 100),
                          Q2.5 = as.numeric(ltm.bs_ints[1,2:101]),
                          Q7.5 = as.numeric(ltm.bs_ints[2,2:101]),
                          Q50 = as.numeric(ltm.bs_ints[3,2:101]),
@@ -697,14 +695,19 @@ ltm.quants <- data.frame(year = seq(from=2010, to=2020, length.out = 100),
                          Q97.5 = as.numeric(ltm.bs_ints[5,2:101]))
 
 # save quantiles
-write.csv(ltm.quants, "Output/Results/Plots/BS_quants/ltm.quants.csv")
+write.csv(ltm.quants, "ltm.quants.csv")
 
 # load quantiles
-ltm.quants <- read.csv("Output/Results/Plots/BS_quants/ltm.quants.csv")
-ltm.quants <- ltm.quants[ ,-1]
+ltm.quants <- read.csv("ltm.quants.csv")
 
 
 ### plots 
+
+ltm.quants$Q2.5 <- ltm.quants$Q2.5 * 1000000
+ltm.quants$Q7.5 <- ltm.quants$Q7.5 * 1000000
+ltm.quants$Q50 <- ltm.quants$Q50 * 1000000
+ltm.quants$Q92.5 <- ltm.quants$Q92.5 * 1000000  
+ltm.quants$Q97.5 <- ltm.quants$Q97.5 * 1000000
 
 # 95% colour
 ltm_plot_95 <- plot95fun(ltm.dat,ltm.quants,"Long-tailed macaque","Grp","Group abundance",2000)
@@ -713,10 +716,11 @@ ltm_plot_95 <- plot95fun(ltm.dat,ltm.quants,"Long-tailed macaque","Grp","Group a
 ltm_plot_85_gr <- plot85Grfun(ltm.dat,ltm.quants,"Long-tailed macaque","Grp","Group abundance",2000)
 
 # 95% black and white
-ltm_plot_95_gr <- plot95Grfun(ltm.dat,ltm.quants,"Long-tailed macaque","Grp","Group abundance",2000)
+ltm_plot_95_gr <- plot95Grfun(ltm.dat,ltm.quants,"Long-tailed macaque","Ind","Individual abundance",1000)
+print(ltm_plot_95_gr)
 
 
-    ## PTM ####
+    ## PTM #################################################################################################################################
 
 ptm.dat <- select(ptm.dat, -X)
 ptm.dat$year <- as.numeric(ptm.dat$year)
@@ -726,7 +730,7 @@ str(ptm.dat)
 ptm.aic.res <- c(df1=NA, df2=NA, df3=NA)
 
 for(dfval in 1:3){
-  ptm.gam.df <- gam(Estimate ~ s(Year, df=dfval), family=gaussian(link="identity"), 
+  ptm.gam.df <- gam(N ~ s(Year, df=dfval), family=gaussian(link="identity"), 
                     data=ptm.dat[ptm.dat$Label=="Grp",])
   ptm.aic.res[paste0("df", dfval)] <- summary(ptm.gam.df)$aic }
 
@@ -752,11 +756,11 @@ fitspecies.func.PTM <- function(bootrep){
   
   
   # create sample.table using SampleInfo
-  sample.table <- data.frame(Sample.Label = rep(sampleInfo$Transect,times=7),
-                             Region.Label = rep(c("2010","2011","2013","2014","2016","2018","2020"),
+  sample.table <- data.frame(Sample.Label = rep(sampleInfo$Transect,times=8),
+                             Region.Label = rep(c("2010","2011","2013","2014","2016","2018","2020", "2022"),
                                                 each=nrow(sampleInfo)),
                              Effort = c(sampleInfo[,3],sampleInfo[,4],sampleInfo[,5],
-                                          sampleInfo[,6],sampleInfo[,7],sampleInfo[,8],sampleInfo[,9]))
+                                          sampleInfo[,6],sampleInfo[,7],sampleInfo[,8],sampleInfo[,9],sampleInfo[,10]))
   
   
   # create obs.table
@@ -770,18 +774,18 @@ fitspecies.func.PTM <- function(bootrep){
   
   ## fit the detection function model
   try(
-    detfunc <- ds(repDataSpecies, region.table = full.region.table, 
-                sample.table = sample.table, obs.table = obs.table,
+    detfunc <- ds(repDataSpecies, region_table = full.region.table, 
+                sample_table = sample.table, obs_table = obs.table,
                 truncation = 50, key = "hr"))
   
   # extract estimates
-  try(estimates <- detfunc$dht$individuals$N[1:7, 1:2])
+  try(estimates <- detfunc$dht$individuals$N[1:8, 1:2])
   try(estimates <- estimates %>% dplyr::rename(Year = Label)) 
   try(estimates$Year <- as.numeric(estimates$Year))
   
   # fit a GAM & predict
   try(gamfit <- gam(Estimate ~ s(Year, df=1), family=gaussian(link="identity"), data = estimates))
-  try(newdata <- data.frame(Year = seq(from=2010, to=2020, length.out = 100)))
+  try(newdata <- data.frame(Year = seq(from=2010, to=2022, length.out = 100)))
   try(pred <- predict.Gam(gamfit, newdata = newdata, type = "response"))
   try(gampred <- data.frame(pred))
   
@@ -791,23 +795,13 @@ fitspecies.func.PTM <- function(bootrep){
 ## Call fitspecies.func to fit GAM to all replicates in boot.res
 system.time(ptm.bs.gams <- lapply(1:length(boot.res), fitspecies.func.PTM)) # 3 hr 50 mins
 
-# Some of the DF models failed and so I think there are some empty list elements which are causing issues
-sapply(ptm.bs.gams, min)
-which(err=="Error in data.frame(pred) : object 'pred' not found\n")
-# 182, 611, 738, 781, 1531, 1631, 1917
-
-# make copy
-ptm.bs.gams2 <- ptm.bs.gams
-
-# remove elements
-ptm.bs.gams2 <- ptm.bs.gams2[- c(182, 611, 738, 781, 1531, 1631, 1917)]
-
-
 # put output list into a dataframe
-ptm.bs.gams.df <- data.frame(matrix(unlist(ptm.bs.gams2), nrow=100, byrow = FALSE))
+ptm.bs.gams.df <- data.frame(matrix(unlist(ptm.bs.gams), nrow=100, byrow = FALSE))
 
 # save (to avoid having to re-run)
-write.csv(ptm.bs.gams.df, file="Output/Results/Trends/Bootstraps/ptm.bs.gams.df.csv")
+write.csv(ptm.bs.gams.df, file="ptm.bs.gams.df.csv")
+
+ptm.bs.gams.df<- read.csv("ptm.bs.gams.df.csv")
 
 # load
 #ptm.bs.gams.df <- read.csv("Output/Results/Trends/Bootstraps/ptm.bs.gams.df.csv")
@@ -819,7 +813,16 @@ trend.df <- data.frame(apply(ptm.bs.gams.df,2,trendFunc))
 table(trend.df)
 # 96.5% of replicates suggest positive trend
 
-# extract 2.5, 7.5, 50, 92.5, and 97.5 quantiles
+#Some of the models may have thrown errors, find the non numeric elements with the code below 
+
+ptm.test <- ptm.bs.gams.df %>%
+  select_if(negate(is.numeric))
+
+#x1473 has error in one row, remove column 
+
+ptm.bs.gams.df <- subset(ptm.bs.gams.df, select = -c(X1473))
+
+## extract 2.5, 7.5, 50, 92.5, and 97.5 quantiles
 ptm.bs_ints <- data.frame(apply(ptm.bs.gams.df, 1, quantile, probs=c(0.025, 0.075, 0.5, 0.925, 0.975)))
 ptm.bs_ints <- ptm.bs_ints %>% rownames_to_column("quant")
 
@@ -827,7 +830,7 @@ ptm.bs_ints <- ptm.bs_ints %>% rownames_to_column("quant")
 #BS_ints_tidy <- gather(BS_ints, key = "year", value = "confits", -quant)
 
 # quantiles into vectors
-ptm.quants <- data.frame(year = seq(from=2010, to=2020, length.out = 100),
+ptm.quants <- data.frame(Year = seq(from=2010, to=2022, length.out = 100),
                          Q2.5 = as.numeric(ptm.bs_ints[1,2:101]),
                          Q7.5 = as.numeric(ptm.bs_ints[2,2:101]),
                          Q50 = as.numeric(ptm.bs_ints[3,2:101]),
@@ -835,11 +838,17 @@ ptm.quants <- data.frame(year = seq(from=2010, to=2020, length.out = 100),
                          Q97.5 = as.numeric(ptm.bs_ints[5,2:101]))
 
 # save quantiles
-write.csv(ptm.quants, "Output/Results/Plots/BS_quants/ptm.quants.csv")
+write.csv(ptm.quants, "ptm.quants.csv")
 
 # load quantiles
-ptm.quants <- read.csv("Output/Results/Plots/BS_quants/ptm.quants.csv")
-ptm.quants <- ptm.quants[ ,-1]
+ptm.quants <- read.csv("ptm.quants.csv")
+#ptm.quants <- ptm.quants[ ,-1]
+
+ptm.quants$Q2.5 <- ptm.quants$Q2.5 * 1000000
+ptm.quants$Q7.5 <- ptm.quants$Q7.5 * 1000000
+ptm.quants$Q50 <- ptm.quants$Q50 * 1000000
+ptm.quants$Q92.5 <- ptm.quants$Q92.5 * 1000000  
+ptm.quants$Q97.5 <- ptm.quants$Q97.5 * 1000000
 
 
 ### plots
@@ -851,11 +860,11 @@ ptm_plot_95 <- plot95fun(ptm.dat,ptm.quants,"Pig-tailed macaque","Grp","Group ab
 ptm_plot_85_gr <- plot85Grfun(ptm.dat,ptm.quants,"Pig-tailed macaque","Grp","Group abundance",2700)
 
 # 95% black and white
-ptm_plot_95_gr <- plot95Grfun(ptm.dat,ptm.quants,"Pig-tailed macaque","Ind","Group abundance",8750)
+ptm_plot_95_gr <- plot95Grfun(ptm.dat,ptm.quants,"Pig-tailed macaque","Ind","Individual abundance",8750)
+print(ptm_plot_95_gr)
 
 
-
-    ## STM ####
+    ## STM ################################################################################################################## DONT DO
 
 stm.dat <- select(stm.dat, -X)
 stm.dat$year <- as.numeric(stm.dat$year)
@@ -1147,18 +1156,21 @@ stm.95 <- ggplot() +
 
 
 
-    ## BSD ####
+    ## BSD ##########################################################################################################################
 
 bsd.dat <- select(bsd.dat, -X)
 bsd.dat$year <- as.numeric(bsd.dat$Year)
 str(bsd.dat)
+
+#Remove row 17,18,19 in bsd dat
+bas.dat <- bsd.dat[-c(17,18,19), ]
 
 # fit gams to real estiamtes (with varying degrees of freedom)
 bsd.aic.res <- c(df1=NA, df2=NA, df3=NA)
 
 for(dfval in 1:3){
   bsd.gam.df <- gam(N ~ s(Year, df=dfval), family=gaussian(link="identity"), 
-                    data=bsd.dat[bsd.dat$Label=="Grp",])
+                    data=bsd.dat[bsd.dat$Label=="Indv",])
   bsd.aic.res[paste0("df", dfval)] <- summary(bsd.gam.df)$aic }
 
 # Choose the fit with lowest AIC:
@@ -1225,7 +1237,7 @@ system.time(bsd.bs.gams <- lapply(1:length(boot.res), fitspecies.func.BSD))
 bsd.bs.gams.df <- data.frame(matrix(unlist(bsd.bs.gams), nrow=100, byrow = FALSE))
 
 # save (to avoid having to re-run)
-write.csv(bsd.bs.gams.df, file="C:/Users/cagger/Documents/Transect sampling/Transect 2022/analysis/Pop assess/GAMs from Github/Cloned through R project/KSWS_trends/bsd.bs.gams.df.csv")
+write.csv(bsd.bs.gams.df, file="bsd.bs.gams.df.csv")
 
 # load
 bsd.bs.gams.df <- read.csv("bsd.bs.gams.df.csv")
@@ -1280,7 +1292,7 @@ bsd_plot_95_gr <- plot95Grfun(bsd.dat,bsd.quants,"Black-shanked douc","Ind","Ind
 print(bsd_plot_95_gr)
 
 
-    ## BTG ####
+    ## BTG ########################################################################################################## DO NOT DO
 
 btg.dat <- select(btg.dat, -X)
 btg.dat$year <- as.numeric(btg.dat$year)
@@ -1399,7 +1411,7 @@ btg.95 <- ggplot()+
         plot.title = element_text(margin = margin(t = 0, r = 0, b = 20, l = 0)))
 
 
-    ## GAU ####
+    ## GAU ####################################################################################################################### DO NOT DO
 
 
 gau.dat <- select(gau.dat, -X)
@@ -1626,17 +1638,17 @@ gau.95 <- ggplot() +
           plot.title = element_text(margin = margin(t = 0, r = 0, b = 20, l = 0)))
 
 
-    ## PIG ####
+    ## PIG #######################################################################################################################################
 
 pig.dat <- select(pig.dat, -X)
-pig.dat$year <- as.numeric(pig.dat$year)
+pig.dat$year <- as.numeric(pig.dat$Year)
 str(pig.dat)
 
 # fit gams to real estiamtes (with varying degrees of freedom)
 pig.aic.res <- c(df1=NA, df2=NA, df3=NA)
 
 for(dfval in 1:3){
-  pig.gam.df <- gam(Estimate ~ s(Year, df=dfval), family=gaussian(link="identity"), data=pig.dat[pig.dat$Label=="Ind",])
+  pig.gam.df <- gam(N ~ s(Year, df=dfval), family=gaussian(link="identity"), data=pig.dat[pig.dat$Label=="Ind",])
   pig.aic.res[paste0("df", dfval)] <- summary(pig.gam.df)$aic }
 
 # Choose the fit with lowest AIC:
@@ -1659,11 +1671,11 @@ fitspecies.func.PIG <- function(bootrep){
   
   
   # create sample.table using SampleInfo
-  sample.table <- data.frame(Sample.Label = rep(sampleInfo$Transect,times=7),
-                             Region.Label = rep(c("2010","2011","2013","2014","2016","2018","2020"),
+  sample.table <- data.frame(Sample.Label = rep(sampleInfo$Transect,times=8),
+                             Region.Label = rep(c("2010","2011","2013","2014","2016","2018","2020", "2022"),
                                                 each=nrow(sampleInfo)),
                              Effort = c(sampleInfo[,3],sampleInfo[,4],sampleInfo[,5],
-                                          sampleInfo[,6],sampleInfo[,7],sampleInfo[,8],sampleInfo[,9]))
+                                          sampleInfo[,6],sampleInfo[,7],sampleInfo[,8],sampleInfo[,9], sampleInfo[,10]))
   
   
   # create obs.table
@@ -1676,21 +1688,21 @@ fitspecies.func.PIG <- function(bootrep){
   
   
   ## fit the detection function model
-  try(detfunc <- ds(repDataSpecies, region.table = full.region.table, 
-                sample.table = sample.table, obs.table = obs.table,
-                truncation = 60, key = "hr",cutpoints = c(0,5,12,16,25,32,45,60)))
+  try(detfunc <- ds(repDataSpecies, region_table = full.region.table, 
+                sample_table = sample.table, obs_table = obs.table,
+                truncation = 60, key = "hr"))
   
   
   # extract estimates
-  estimates <- detfunc$dht$individuals$N[1:7, 1:2]
-  estimates <- estimates %>% dplyr::rename(Year = Label) 
-  estimates$Year <- as.numeric(estimates$Year)
+  try(estimates <- detfunc$dht$individuals$N[1:8, 1:2])
+  try(estimates <- estimates %>% dplyr::rename(Year = Label)) 
+  try(estimates$Year <- as.numeric(estimates$Year))
   
   # fit a GAM & predict
-  gamfit <- gam(Estimate ~ s(Year, df=3), family=gaussian(link="identity"), data = estimates)
-  newdata <- data.frame(Year = seq(from=2010, to=2020, length.out = 100))
-  pred <- predict.Gam(gamfit, newdata = newdata, type = "response")
-  gampred <- data.frame(pred)
+  try(gamfit <- gam(Estimate ~ s(Year, df=2), family=gaussian(link="identity"), data = estimates))
+  try(newdata <- data.frame(Year = seq(from=2010, to=2022, length.out = 100)))
+  try(pred <- predict.Gam(gamfit, newdata = newdata, type = "response"))
+  try(gampred <- data.frame(pred))
   
 }
 
@@ -1701,10 +1713,10 @@ system.time(pig.bs.gams <- lapply(1:length(boot.res), fitspecies.func.PIG)) #48m
 pig.bs.gams.df <- data.frame(matrix(unlist(pig.bs.gams), nrow=100, byrow = FALSE))
 
 # save (to avoid having to re-run)
-write.csv(pig.bs.gams.df, file="Output/Results/Trends/Bootstraps/pig.bs.gams.df.csv")
+write.csv(pig.bs.gams.df, file="pig.bs.gams.df.2.csv")
 
 # load
-#pig.bs.gams.df <- read.csv("Output/Results/Trends/Bootstraps/pig.bs.gams.df.csv")
+pig.bs.gams.df <- read.csv("pig.bs.gams.df.csv")
 #pig.bs.gams.df <- pig.bs.gams.df[ ,-1]
 
 
@@ -1713,30 +1725,52 @@ trend.df <- data.frame(apply(pig.bs.gams.df,2,trendFunc))
 table(trend.df)
 # 97% of replicates suggest negative trend
 
+## Some of the models created errors, find where these are and remove from dataframe 
+
+which(pig.bs.gams.df=="Error in data.frame(pred) : object 'pred' not found\n")
+
+#Remove the columns with the errors 
+pig.bs.gams.df <- subset(pig.bs.gams.df, select = -c(X290, X327, X1465, X326, X1464, X1463))
+
+#dataframe may now not be numerical, see if can change to numerical for it to do below
+
+pig.bs.gams.df <- mutate_all(pig.bs.gams.df, function(x) as.numeric(as.character(x)))
+
 # extract 2.5, 7.5, 50, 92.5, and 97.5 quantiles
 pig.bs_ints <- data.frame(apply(pig.bs.gams.df, 1, quantile, probs=c(0.025, 0.075, 0.5, 0.925, 0.975)))
 pig.bs_ints <- pig.bs_ints %>% rownames_to_column("quant")
+
+#experiment with remocing bum rows 
+
+pig.bs_ints <- subset(pig.bs_ints, select = -c(X1, X2, X3))
 
 # Put into tidy format
 #BS_ints_tidy <- gather(BS_ints, key = "year", value = "confits", -quant)
 
 # quantiles into vectors
-pig.quants <- data.frame(year = seq(from=2010, to=2020, length.out = 100),
-                         Q2.5 = as.numeric(pig.bs_ints[1,2:101]),
-                         Q7.5 = as.numeric(pig.bs_ints[2,2:101]),
-                         Q50 = as.numeric(pig.bs_ints[3,2:101]),
-                         Q92.5 = as.numeric(pig.bs_ints[4,2:101]),
-                         Q97.5 = as.numeric(pig.bs_ints[5,2:101]))
+pig.quants <- data.frame(Year = seq(from=2010, to=2022, length.out = 97),
+                         Q2.5 = as.numeric(pig.bs_ints[1,2:98]),
+                         Q7.5 = as.numeric(pig.bs_ints[2,2:98]),
+                         Q50 = as.numeric(pig.bs_ints[3,2:98]),
+                         Q92.5 = as.numeric(pig.bs_ints[4,2:98]),
+                         Q97.5 = as.numeric(pig.bs_ints[5,2:98]))
 
 # save quantiles
-write.csv(pig.quants, "Output/Results/Plots/BS_quants/pig.quants.csv")
+write.csv(pig.quants, "pig.quants.csv")
 
 # load quantiles
-pig.quants <- read.csv("Output/Results/Plots/BS_quants/pig.quants.csv")
-pig.quants <- pig.quants[ ,-1]
+pig.quants <- read.csv("pig.quants.csv")
+#pig.quants <- pig.quants[ ,-1]
 
 
 ### plots
+
+#To make the same effort so plots make sense 
+pig.quants$Q2.5 <- pig.quants$Q2.5 * 1000000
+pig.quants$Q7.5 <- pig.quants$Q7.5 * 1000000
+pig.quants$Q50 <- pig.quants$Q50 * 1000000
+pig.quants$Q92.5 <- pig.quants$Q92.5 * 1000000  
+pig.quants$Q97.5 <- pig.quants$Q97.5 * 1000000
 
 # 95% colour
 pig_plot_95 <- plot95fun(pig.dat,pig.quants,"Wild pig","Ind","Individual abundance",7000)
@@ -1746,10 +1780,10 @@ pig_plot_85_gr <- plot85Grfun(pig.dat,pig.quants,"Wild pig","Ind","Individual ab
 
 # 95% black and white
 pig_plot_95_gr <- plot95Grfun(pig.dat,pig.quants,"Wild pig","Ind","Individual abundance",7000)
+print(pig_plot_95_gr)
 
 
-
-    ## GPF ####
+    ## GPF #################################################################################################################
 
 gpf.dat <- select(gpf.dat, -X)
 gpf.dat$year <- as.numeric(gpf.dat$year)
@@ -1759,7 +1793,7 @@ str(gpf.dat)
 gpf.aic.res <- c(df1=NA, df2=NA, df3=NA)
 
 for(dfval in 1:3){
-  gpf.gam.df <- gam(Estimate ~ s(Year, df=dfval), family=gaussian(link="identity"), data=gpf.dat[gpf.dat$Label=="Ind",])
+  gpf.gam.df <- gam(N ~ s(Year, df=dfval), family=gaussian(link="identity"), data=gpf.dat[gpf.dat$Label=="Ind",])
   gpf.aic.res[paste0("df", dfval)] <- summary(gpf.gam.df)$aic }
 
 # Choose the fit with lowest AIC:
@@ -1783,11 +1817,11 @@ fitspecies.func.GPF <- function(bootrep){
   
   
   # create sample.table using SampleInfo
-  sample.table <- data.frame(Sample.Label = rep(sampleInfo$Transect,times=7),
-                             Region.Label = rep(c("2010","2011","2013","2014","2016","2018","2020"),
+  sample.table <- data.frame(Sample.Label = rep(sampleInfo$Transect,times=8),
+                             Region.Label = rep(c("2010","2011","2013","2014","2016","2018","2020", "2022"),
                                                 each=nrow(sampleInfo)),
                              Effort = c(sampleInfo[,3],sampleInfo[,4],sampleInfo[,5],
-                                          sampleInfo[,6],sampleInfo[,7],sampleInfo[,8],sampleInfo[,9]))
+                                          sampleInfo[,6],sampleInfo[,7],sampleInfo[,8],sampleInfo[,9], sampleInfo[,10]))
   
   
   # create obs.table
@@ -1800,19 +1834,19 @@ fitspecies.func.GPF <- function(bootrep){
   
   
   ## fit the detection function model
-  try(detfunc <- ds(repDataSpecies, region.table = full.region.table, 
-                sample.table = sample.table, obs.table = obs.table,
+  try(detfunc <- ds(repDataSpecies, region_table = full.region.table, 
+                sample_table = sample.table, obs_table = obs.table,
                 truncation = 80, key = "hn"))
   
   
   # extract estimates
-  estimates <- detfunc$dht$individuals$N[1:7, 1:2]
+  estimates <- detfunc$dht$individuals$N[1:8, 1:2]
   estimates <- estimates %>% dplyr::rename(Year = Label) 
   estimates$Year <- as.numeric(estimates$Year)
   
   # fit a GAM & predict
   gamfit <- gam(Estimate ~ s(Year, df=3), family=gaussian(link="identity"), data = estimates)
-  newdata <- data.frame(Year = seq(from=2010, to=2020, length.out = 100))
+  newdata <- data.frame(Year = seq(from=2010, to=2022, length.out = 100))
   pred <- predict.Gam(gamfit, newdata = newdata, type = "response")
   gampred <- data.frame(pred)
   
@@ -1825,10 +1859,10 @@ system.time(gpf.bs.gams <- lapply(1:length(boot.res), fitspecies.func.GPF)) # 31
 gpf.bs.gams.df <- data.frame(matrix(unlist(gpf.bs.gams), nrow=100, byrow = FALSE))
 
 # save (to avoid having to re-run)
-write.csv(gpf.bs.gams.df, file="Output/Results/Trends/Bootstraps/gpf.bs.gams.df.csv")
+write.csv(gpf.bs.gams.df, file="gpf.bs.gams.df.csv")
 
 # load
-#gpf.bs.gams.df <- read.csv("Output/Results/Trends/Bootstraps/gpf.bs.gams.df.csv")
+gpf.bs.gams.df <- read.csv("gpf.bs.gams.df.csv")
 #gpf.bs.gams.df <- gpf.bs.gams.df[ ,-1]
 
 
@@ -1846,7 +1880,7 @@ gpf.bs_ints <- gpf.bs_ints %>% rownames_to_column("quant")
 #BS_ints_tidy <- gather(BS_ints, key = "year", value = "confits", -quant)
 
 # quantiles into vectors
-gpf.quants <- data.frame(year = seq(from=2010, to=2020, length.out = 100),
+gpf.quants <- data.frame(Year = seq(from=2010, to=2022, length.out = 100),
                          Q2.5 = as.numeric(gpf.bs_ints[1,2:101]),
                          Q7.5 = as.numeric(gpf.bs_ints[2,2:101]),
                          Q50 = as.numeric(gpf.bs_ints[3,2:101]),
@@ -1854,13 +1888,20 @@ gpf.quants <- data.frame(year = seq(from=2010, to=2020, length.out = 100),
                          Q97.5 = as.numeric(gpf.bs_ints[5,2:101]))
 
 # save quantiles
-write.csv(gpf.quants, "Output/Results/Plots/BS_quants/gpf.quants.csv")
+write.csv(gpf.quants, "gpf.quants.csv")
 
 # load quantiles
-gpf.quants <- read.csv("Output/Results/Plots/BS_quants/gpf.quants.csv")
-gpf.quants <- gpf.quants[ , -1]
+gpf.quants <- read.csv("gpf.quants.csv")
+#gpf.quants <- gpf.quants[ , -1]
 
 ### plots
+
+gpf.quants$Q2.5 <- gpf.quants$Q2.5 * 1000000
+gpf.quants$Q7.5 <- gpf.quants$Q7.5 * 1000000
+gpf.quants$Q50 <- gpf.quants$Q50 * 1000000
+gpf.quants$Q92.5 <- gpf.quants$Q92.5 * 1000000  
+gpf.quants$Q97.5 <- gpf.quants$Q97.5 * 1000000
+
 
 # 95% colour
 gpf_plot_95 <- plot95fun(gpf.dat,gpf.quants,"Green peafowl","Ind","Individual abundance",3000)
@@ -1869,36 +1910,36 @@ gpf_plot_95 <- plot95fun(gpf.dat,gpf.quants,"Green peafowl","Ind","Individual ab
 gpf_plot_85_gr <- plot85Grfun(gpf.dat,gpf.quants,"Green peafowl","Ind","Individual abundance",3000)
 
 # 95% black and white
-gpf_plot_95_gr <- plot95Grfun(gpf.dat,gpf.quants,"Green peafowl","Ind","Individual abundance",3000)
+plot95Grfun(gpf.dat,gpf.quants,"Green peafowl","Ind","Individual abundance",3000)
 
 
 
-    ## RMJ ####
+    ## RED ###############################################################################################################################################
 
-rmj.dat <- select(rmj.dat, -X)
-rmj.dat$year <- as.numeric(rmj.dat$year)
-str(rmj.dat)
+red.dat <- select(red.dat, -X)
+red.dat$year <- as.numeric(red.dat$year)
+str(red.dat)
 
 # fit gams to real estiamtes (with varying degrees of freedom)
-rmj.aic.res <- c(df1=NA, df2=NA, df3=NA)
+red.aic.res <- c(df1=NA, df2=NA, df3=NA)
 
 for(dfval in 1:3){
-  rmj.gam.df <- gam(Estimate ~ s(Year, df=dfval), family=gaussian(link="identity"), 
-                    data=rmj.dat[rmj.dat$Label=="Ind",])
-  rmj.aic.res[paste0("df", dfval)] <- summary(rmj.gam.df)$aic }
+  red.gam.df <- gam(N ~ s(Year, df=dfval), family=gaussian(link="identity"), 
+                    data=red.dat[red.dat$Label=="Ind",])
+  red.aic.res[paste0("df", dfval)] <- summary(red.gam.df)$aic }
 
 # Choose the fit with lowest AIC:
-which.min(rmj.aic.res) # df = 3
+which.min(red.aic.res) # df = 3
 
 
 ## Get confidence intervals from the bootstrapped replicates
 
 # Function for each species. For more details see this section in the YCG section above. 
 
-# For the annual DF models for RMJ, the majority are uniform, so that is what I will use in the function. The majority of trunc distances are 60 so that is what will be used.
+# For the annual DF models for red, the majority are uniform, so that is what I will use in the function. The majority of trunc distances are 60 so that is what will be used.
 
 # function to fit a GAM to each replicate of boot.res
-fitspecies.func.RMJ <- function(bootrep){
+fitspecies.func.red <- function(bootrep){
   
   
   ## Extract the bootstrap replicate data for the desired species:
@@ -1909,11 +1950,11 @@ fitspecies.func.RMJ <- function(bootrep){
   
   
   # create sample.table using SampleInfo
-  sample.table <- data.frame(Sample.Label = rep(sampleInfo$Transect,times=7),
-                             Region.Label = rep(c("2010","2011","2013","2014","2016","2018","2020"),
+  sample.table <- data.frame(Sample.Label = rep(sampleInfo$Transect,times=8),
+                             Region.Label = rep(c("2010","2011","2013","2014","2016","2018","2020","2022"),
                                                 each=nrow(sampleInfo)),
                              Effort = c(sampleInfo[,3],sampleInfo[,4],sampleInfo[,5],
-                                          sampleInfo[,6],sampleInfo[,7],sampleInfo[,8],sampleInfo[,9]))
+                                          sampleInfo[,6],sampleInfo[,7],sampleInfo[,8],sampleInfo[,9],sampleInfo[,10]))
   
   
   # create obs.table
@@ -1926,75 +1967,81 @@ fitspecies.func.RMJ <- function(bootrep){
   
   
   ## fit the detection function model
-  try(detfunc <- ds(repDataSpecies, region.table = full.region.table, 
-                sample.table = sample.table, obs.table = obs.table,
+  try(detfunc <- ds(repDataSpecies, region_table = full.region.table, 
+                sample_table = sample.table, obs_table = obs.table,
                 truncation = 60, key = "hn", adjustment= "cos", 
                 cutpoints = c(0,7,14,21,28,35,42,49,56,60)))
   
   
   # extract estimates
-  estimates <- detfunc$dht$individuals$N[1:7, 1:2]
+  estimates <- detfunc$dht$individuals$N[1:8, 1:2]
   estimates <- estimates %>% dplyr::rename(Year = Label) 
   estimates$Year <- as.numeric(estimates$Year)
   
   # fit a GAM & predict
   gamfit <- gam(Estimate ~ s(Year, df=3), family=gaussian(link="identity"), data = estimates)
-  newdata <- data.frame(Year = seq(from=2010, to=2020, length.out = 100))
+  newdata <- data.frame(Year = seq(from=2010, to=2022, length.out = 100))
   pred <- predict.Gam(gamfit, newdata = newdata, type = "response")
   gampred <- data.frame(pred)
   
 }
 
 ## Call fitspecies.func to fit GAM to all replicates in boot.res
-system.time(rmj.bs.gams <- lapply(1:length(boot.res), fitspecies.func.RMJ))
+system.time(red.bs.gams <- lapply(1:length(boot.res), fitspecies.func.red))
 
 # put output list into a dataframe
-rmj.bs.gams.df <- data.frame(matrix(unlist(rmj.bs.gams), nrow=100, byrow = FALSE))
+red.bs.gams.df <- data.frame(matrix(unlist(red.bs.gams), nrow=100, byrow = FALSE))
 
 # save (to avoid having to re-run)
-write.csv(rmj.bs.gams.df, file="Output/Results/Trends/Bootstraps/rmj.bs.gams.df.csv")
+write.csv(red.bs.gams.df, file="red.bs.gams.df.csv")
 
 # load
-rmj.bs.gams.df <- read.csv("Output/Results/Trends/Bootstraps/rmj.bs.gams.df.csv")
+red.bs.gams.df <- read.csv("red.bs.gams.df.csv")
 
 # test what percentage of the last BS gam estimates are above the first. This is to test for a significant trend 
-trend.df <- data.frame(apply(rmj.bs.gams.df,2,trendFunc))
+trend.df <- data.frame(apply(red.bs.gams.df,2,trendFunc))
 table(trend.df)
 # 100% of replicates suggest negative trend
 
 
 # extract 2.5, 7.5, 50, 92.5, and 97.5 quantiles
-rmj.bs_ints <- data.frame(apply(rmj.bs.gams.df, 1, quantile, probs=c(0.025, 0.075, 0.5, 0.925, 0.975)))
-rmj.bs_ints <- rmj.bs_ints %>% rownames_to_column("quant")
+red.bs_ints <- data.frame(apply(red.bs.gams.df, 1, quantile, probs=c(0.025, 0.075, 0.5, 0.925, 0.975)))
+red.bs_ints <- red.bs_ints %>% rownames_to_column("quant")
 
 # Put into tidy format
 #BS_ints_tidy <- gather(BS_ints, key = "year", value = "confits", -quant)
 
 # quantiles into vectors
-rmj.quants <- data.frame(year = seq(from=2010, to=2020, length.out = 100),
-                         Q2.5 = as.numeric(rmj.bs_ints[1,2:101]),
-                         Q7.5 = as.numeric(rmj.bs_ints[2,2:101]),
-                         Q50 = as.numeric(rmj.bs_ints[3,2:101]),
-                         Q92.5 = as.numeric(rmj.bs_ints[4,2:101]),
-                         Q97.5 = as.numeric(rmj.bs_ints[5,2:101]))
+red.quants <- data.frame(Year = seq(from=2010, to=2022, length.out = 100),
+                         Q2.5 = as.numeric(red.bs_ints[1,2:101]),
+                         Q7.5 = as.numeric(red.bs_ints[2,2:101]),
+                         Q50 = as.numeric(red.bs_ints[3,2:101]),
+                         Q92.5 = as.numeric(red.bs_ints[4,2:101]),
+                         Q97.5 = as.numeric(red.bs_ints[5,2:101]))
 
 # save quantiles
-write.csv(rmj.quants, "Output/Results/Plots/BS_quants/rmj.quants.csv")
+write.csv(red.quants, "red.quants.csv")
 
 # load quantiles
-rmj.quants <- read.csv("Output/Results/Plots/BS_quants/rmj.quants.csv")
-rmj.quants <- rmj.quants[ ,-1]
+red.quants <- read.csv("red.quants.csv")
+red.quants <- red.quants[ ,-1]
 
 ### plots
 
+red.quants$Q2.5 <- red.quants$Q2.5 * 1000000
+red.quants$Q7.5 <- red.quants$Q7.5 * 1000000
+red.quants$Q50 <- red.quants$Q50 * 1000000
+red.quants$Q92.5 <- red.quants$Q92.5 * 1000000  
+red.quants$Q97.5 <- red.quants$Q97.5 * 1000000
+
 # 95% colour
-rmj_plot_95 <- plot95fun(rmj.dat,rmj.quants,"Red muntjac","Ind","Individual abundance",7000)
+red_plot_95 <- plot95fun(red.dat,red.quants,"Red muntjac","Ind","Individual abundance",7000)
 
 # 95 & 85% black and white
-rmj_plot_85_gr <- plot85Grfun(rmj.dat,rmj.quants,"Red muntjac","Ind","Individual abundance",7000)
+red_plot_85_gr <- plot85Grfun(red.dat,red.quants,"Red muntjac","Ind","Individual abundance",7000)
 
 # 95% black and white
-rmj_plot_95_gr <- plot95Grfun(rmj.dat,rmj.quants,"Red muntjac","Ind","Individual abundance",7000)
+plot95Grfun(red.dat,red.quants,"Red muntjac","Ind","Individual abundance",6500)
 
 
 
@@ -2020,8 +2067,8 @@ pig.bs.gams.df <- read.csv("Output/Results/Trends/Bootstraps/pig.bs.gams.df.csv"
 pig.bs.gams.df <- pig.bs.gams.df %>% select(-X)
 gpf.bs.gams.df <- read.csv("Output/Results/Trends/Bootstraps/gpf.bs.gams.df.csv")
 gpf.bs.gams.df <- gpf.bs.gams.df %>% select(-X)
-rmj.bs.gams.df <- read.csv("Output/Results/Trends/Bootstraps/rmj.bs.gams.df.csv")
-rmj.bs.gams.df <- rmj.bs.gams.df %>% select(-X)
+red.bs.gams.df <- read.csv("Output/Results/Trends/Bootstraps/red.bs.gams.df.csv")
+red.bs.gams.df <- red.bs.gams.df %>% select(-X)
 
 # load in quantiles for all spcies
 ycg.quants <- read.csv("Output/Results/Plots/BS_quants/ycg.quants.csv")
@@ -2033,7 +2080,7 @@ gsl.quants <- read.csv("Output/Results/Plots/BS_quants/gsl.quants.csv")
 ltm.quants <- read.csv("Output/Results/Plots/BS_quants/ltm.quants.csv")
 pig.quants <- read.csv("Output/Results/Plots/BS_quants/pig.quants.csv")
 ptm.quants <- read.csv("Output/Results/Plots/BS_quants/ptm.quants.csv")
-rmj.quants <- read.csv("Output/Results/Plots/BS_quants/rmj.quants.csv")
+red.quants <- read.csv("Output/Results/Plots/BS_quants/red.quants.csv")
 stm.quants <- read.csv("Output/Results/Plots/BS_quants/stm.quants.csv")
 
 
@@ -2045,17 +2092,17 @@ stm.quants <- read.csv("Output/Results/Plots/BS_quants/stm.quants.csv")
 
 # put all into a list
 trend.list <- list(ycg.bs.gams.df,gsl.bs.gams.df,ltm.bs.gams.df,ptm.bs.gams.df,stm.bs.gams.df,
-                     bsd.bs.gams.df,gau.bs.gams.df,pig.bs.gams.df,gpf.bs.gams.df,rmj.bs.gams.df)
+                     bsd.bs.gams.df,gau.bs.gams.df,pig.bs.gams.df,gpf.bs.gams.df,red.bs.gams.df)
 
 # name elements
-names(trend.list) <- c("ycg","gsl","ltm","ptm","stm","bsd","gau","pig","gpf","rmj")
+names(trend.list) <- c("ycg","gsl","ltm","ptm","stm","bsd","gau","pig","gpf","red")
 
 # apply the trend function to each element
 trend.df <- as.data.frame(lapply(trend.list,calcfun))
 table(trend.df)
 
 # manually create dataframe as can't get the bastard pivot_longer() to work
-trend.df.all <- data.frame(species=c("ycg","gsl","ltm","ptm","stm","bsd","gau","pig","gpf","rmj"),
+trend.df.all <- data.frame(species=c("ycg","gsl","ltm","ptm","stm","bsd","gau","pig","gpf","red"),
                            positive_btsrp = c(1783, 1084, 580,  1924, 0, 1749,78,70,1971,0),
                            negative_btsrp = c(217,  916,  1420, 69,   1988, 251, 1922,1930,29,2000))
 
@@ -2083,10 +2130,10 @@ trend.df.l <- trend.df %>% pivot_longer(ends_with(".df"), names_to = "species", 
 
 # put all into a list
 trend.list <- list(ycg.quants,bsd.quants,gau.quants,gpf.quants,gsl.quants,ltm.quants,pig.quants,ptm.quants,
-                   rmj.quants,stm.quants)
+                   red.quants,stm.quants)
 
 # name elements
-names(trend.list) <- c("ycg","bsd","gau","gpf","gsl","ltm","pig","ptm","rmj","stm")
+names(trend.list) <- c("ycg","bsd","gau","gpf","gsl","ltm","pig","ptm","red","stm")
 
 # run function over list
 trends.85.list <- lapply(trend.list, trendFunc2)
@@ -2101,10 +2148,10 @@ trends.85 <- as.data.frame(do.call(rbind,trends.85.list))
 
 # put all species quantile dataframes into a list
 trend.list <- list(ycg.quants,bsd.quants,gau.quants,gpf.quants,gsl.quants,ltm.quants,pig.quants,ptm.quants,
-              rmj.quants,stm.quants)
+              red.quants,stm.quants)
 
 # name the list elements
-names(trend.list) <- c("ycg","bsd","gau","gpf","gsl","ltm","pig","ptm","rmj","stm")
+names(trend.list) <- c("ycg","bsd","gau","gpf","gsl","ltm","pig","ptm","red","stm")
 
 # function to create dataframe using the required data from the quantiles
 extrFun <- function(x){
@@ -2151,7 +2198,7 @@ trend.estimates.list <- lapply(trend.list, extrFun)
 trend.estimates <- do.call(rbind,trend.estimates.list)
 
 # add species column
-trend.estimates$Species <- rep(c("ycg","bsd","gau","gpf","gsl","ltm","pig","ptm","rmj","stm"),each=11)
+trend.estimates$Species <- rep(c("ycg","bsd","gau","gpf","gsl","ltm","pig","ptm","red","stm"),each=11)
 
 # remove annoying rownames
 rownames(trend.estimates) <- c()
@@ -2172,7 +2219,7 @@ write.csv(trend.estimates, file="Output/Results/Trends/trend_estimates.csv")
 
 # all species  
 ycg_plot_95_gr + bsd_plot_95_gr + gsl_plot_95_gr + ltm_plot_95_gr + ptm_plot_95_gr + stm_plot_95_gr + 
-  btg_plot + gau_plot_95_gr + pig_plot_95_gr + rmj_plot_95_gr + gpf_plot_95_gr
+  btg_plot + gau_plot_95_gr + pig_plot_95_gr + red_plot_95_gr + gpf_plot_95_gr
 
 
 # final trend plots for primates only
@@ -2222,7 +2269,7 @@ ggsave("Output/Results/Plots/final_trend_plot_prims.png", final_trend_plot_prims
 
 
 # final trend plots for non-primates
-final_trend_plot_ungs <- btg_plot + gau_plot_95_gr + pig_plot_95_gr + rmj_plot_95_gr + gpf_plot_95_gr
+final_trend_plot_ungs <- btg_plot + gau_plot_95_gr + pig_plot_95_gr + red_plot_95_gr + gpf_plot_95_gr
 
 # remove y axis labels from plots 2,3,5
 final_trend_plot_ungs[[2]] <- final_trend_plot_ungs[[2]] + theme(axis.title.y = element_blank())
@@ -2277,7 +2324,7 @@ btg.p <- btg_plot
 gau.p <- plot95Grfun3(gau.quants,"Gaur","Ind","Individual abundance", 1250)
 pig.p <- plot95Grfun3(pig.quants,"Wild pig","Ind","Individual abundance", 3600)
 gpf.p <- plot95Grfun3(gpf.quants,"Green peafowl","Ind","Individual abundance", 1950)
-rmj.p <- plot95Grfun3(rmj.quants,"Red muntjac","Ind","Individual abundance", 4800)
+red.p <- plot95Grfun3(red.quants,"Red muntjac","Ind","Individual abundance", 4800)
 
 
 ## Primates
@@ -2319,7 +2366,7 @@ ggsave("Output/Results/Plots/Trends/trend_plot_prims.png", prims.p,
 ## non-primates
 
 # make plot grid
-ungs.p <- btg.p+ gau.p + pig.p + rmj.p + gpf.p 
+ungs.p <- btg.p+ gau.p + pig.p + red.p + gpf.p 
 
 # remove y axis labels from plots 2,3,5,6
 ungs.p[[2]] <- ungs.p[[2]] + theme(axis.title.y = element_blank())
@@ -2361,7 +2408,7 @@ btg.p2 <- btg_plot2
 gau.p2 <- plot95Grfun2(gau.dat, gau.quants,"Gaur","Ind","Individual abundance", 3250)
 pig.p2 <- plot95Grfun2(pig.dat, pig.quants,"Wild pig","Ind","Individual abundance", 6200)
 gpf.p2 <- plot95Grfun2(gpf.dat, gpf.quants,"Green peafowl","Ind","Individual abundance", 2800)
-rmj.p2 <- plot95Grfun2(rmj.dat, rmj.quants,"Red muntjac","Ind","Individual abundance", 6150)
+red.p2 <- plot95Grfun2(red.dat, red.quants,"Red muntjac","Ind","Individual abundance", 6150)
 
 
 ## Primates
@@ -2403,7 +2450,7 @@ ggsave("Output/Results/Plots/Trends/trend_plot_prims_points.png", prims.p2,
 ## non-primates
 
 # make plot grid
-ungs.p2 <- btg.p2 + gau.p2 + pig.p2 + rmj.p2 + gpf.p2 
+ungs.p2 <- btg.p2 + gau.p2 + pig.p2 + red.p2 + gpf.p2 
 
 # remove y axis labels from plots 2,3,5,6
 ungs.p2[[2]] <- ungs.p2[[2]] + theme(axis.title.y = element_blank())
@@ -2446,7 +2493,7 @@ btg.95 <- btg.95
 gau.95 <- gau.95
 pig.95 <- plot95Grfun4(pig.dat, pig.quants,"Pig","Ind","Abundance", 6200)
 gpf.95 <- plot95Grfun4(gpf.dat, gpf.quants,"Peafowl","Ind","Abundance", 2800)
-rmj.95 <- plot95Grfun4(rmj.dat, rmj.quants,"Muntjac","Ind","Abundance", 6150)
+red.95 <- plot95Grfun4(red.dat, red.quants,"Muntjac","Ind","Abundance", 6150)
 
 
       # Arranged by primates/non-primates ####
@@ -2494,7 +2541,7 @@ ggsave("Output/Results/Plots/Trends/trend_plot95_prims_points.png", prims.p2,
 ## 2 rows, 3 columns
 
 # make plot grid
-ungs.p2 <- btg.95 + gau.95 + pig.95 + rmj.95 + gpf.95 
+ungs.p2 <- btg.95 + gau.95 + pig.95 + red.95 + gpf.95 
 
 # remove y axis labels from plots 2,3,5,6
 ungs.p2[[2]] <- ungs.p2[[2]] + theme(axis.title.y = element_blank())
@@ -2527,7 +2574,7 @@ ggsave("Output/Results/Plots/Trends/trend_plot95_ungsWIDE_points.png", ungs.p2,
 ## 3 rows, 2 columns
 
 # make plot grid
-ungs.p3 <- btg.95 + gau.95 + pig.95 + rmj.95 + gpf.95 + plot_layout(ncol=2)
+ungs.p3 <- btg.95 + gau.95 + pig.95 + red.95 + gpf.95 + plot_layout(ncol=2)
 
 # remove y axis labels from plots 2,4
 ungs.p3[[2]] <- ungs.p3[[2]] + theme(axis.title.y = element_blank())
@@ -2602,7 +2649,7 @@ ggsave("Output/Results/Plots/Trends/trend_plot95_stable_3.png", stab.p2,
 ### decreasing species
 
 # make plot grid
-decr.p2 <- stm.95 + btg.95 + gau.95 + rmj.95 + pig.95
+decr.p2 <- stm.95 + btg.95 + gau.95 + red.95 + pig.95
 
 # remove y axis labels from plots 2,3,5
 decr.p2[[2]] <- decr.p2[[2]] + theme(axis.title.y = element_blank())
@@ -2646,9 +2693,9 @@ stab.p2 / decr.p2
 
 # arboreal primates: YCG, BSD, GSL, 
 # Semi-arb species:  GPF, PTM, LTM, STM, 
-# ground based spec: BTG, GAU, RMJ, PIG
+# ground based spec: BTG, GAU, red, PIG
 
-all.p <- ycg.95+bsd.95+gsl.95+gpf.95+ptm.95+ltm.95+stm.95+btg.95+gau.95+rmj.95+pig.95 + plot_layout(ncol=4)
+all.p <- ycg.95+bsd.95+gsl.95+gpf.95+ptm.95+ltm.95+stm.95+btg.95+gau.95+red.95+pig.95 + plot_layout(ncol=4)
 
 
 
