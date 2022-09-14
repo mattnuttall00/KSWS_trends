@@ -37,8 +37,8 @@ boot.res[[5]]$sampleInfo[12,]
 
 unique(boot.res[[5]]$repData$obs.transectOrig[boot.res[[5]]$repData$Transect==12])
 
-
-
+###Depending on your project set up the below may not code until line 62 may not be needed. The project in KSWS previously prioritised certain trnsects were more effot was expended with more visits. Attempts were made
+#to try and include this in the analysis however it served as too difficult. The concept was scrapped. The below code removes the method of storage of this prioritised data. You may not need. 
 
 ### This section (up to line 62) had been removed because when I did this analysis previously I removed the priority strata from the KSWS_MASTER.Rdata prior to running this part of the analysis. But originally, I hadn't done that so removed the strata here at this stage. I have added the code again so that you can choose whether to remove the strata from the master data, or here once you've run the bootstrap.
 
@@ -90,7 +90,10 @@ for(hab in c("All", "Dense", "Open", "Nonf")){
 #### Trend estimation ####
   ## Trends in abundance - GAMs ####
 
-# load in abundance estimates for all species
+# load in abundance estimates for all species. 
+#This data includes the output of standard distance samplng modelling. Including columns like: 
+#Year, labels for both individual and group estimates, the N estimates, standard errors, upper and lower confidence intervals, cv, 
+#and the same out but for density
 ycg.dat <- read.csv("Data/CDS_results/YCG_results_final.csv",        header = TRUE)
 bsd.dat <- read.csv("Data/CDS_results/BSD_results_final.csv",        header = TRUE)
 btg.dat <- read.csv("Data/CDS_results/BTG_results_final.csv",        header = TRUE)
@@ -102,8 +105,6 @@ pig.dat <- read.csv("Data/CDS_results/PIG_results_final_binned.csv", header = TR
 ptm.dat <- read.csv("Data/CDS_results/PTM_results_final.csv",        header = TRUE)
 red.dat <- read.csv("Data/CDS_results/RMJ_results_final_binned.csv", header = TRUE)
 stm.dat <- read.csv("Data/CDS_results/STM_results_final.csv",        header = TRUE)
-
-
 
   ## Functions (plots & trends) ####
 
@@ -169,8 +170,8 @@ plot85Grfun <- function(dat,quants,species,label,ylab,ymax){
 plot95Grfun <- function(dat,quants,species,label,ylab,ymax){
   
   ggplot()+
-     geom_point(data=dat[dat$Label==label,], aes(x=Year, y=N), size=3.5)+
-    geom_errorbar(data=dat[dat$Label==label,],aes(x=Year, ymin=n_lcl, ymax=n_ucl),width=0.2)+
+     geom_point(data=dat[dat$Label==label,], aes(x=Year, y=N), size=3.5, colour = "grey50")+
+    geom_errorbar(data=dat[dat$Label==label,],aes(x=Year, ymin=n_lcl, ymax=n_ucl),width=0.2, colour = "grey50")+
     geom_line(data=quants, aes(x=Year, y=Q50), size=1)+
     geom_line(data=quants, aes(x=Year, y=Q2.5), linetype="dotted", size=0.8)+
     geom_line(data=quants, aes(x=Year, y=Q97.5), linetype="dotted", size=0.8)+
@@ -292,6 +293,7 @@ plot95Grfun5 <- function(dat,quants,species,label,ylab,ymax){
 ### trend functions
 
 # calculates whether each replicate is positive or negative trend (bootstrapping method)
+# Used to categorise if a population is increasing or decreasing
 trendFunc <- function(x){
   ifelse(x[1] < x[100], "positive", "negative")
 }
@@ -328,7 +330,7 @@ for(dfval in 1:3){
 
 
 # Choose the fit with lowest AIC:
-which.min(ycg.aic.res) # df=1
+which.min(ycg.aic.res)
 
 
 ## Get confidence intervals from the bootstrapped replicates
@@ -396,11 +398,8 @@ ycg.bs.gams.df <- data.frame(matrix(unlist(ycg.bs.gams), nrow=100, byrow = FALSE
 write.csv(ycg.bs.gams.df, file="ycg.bs.gams.df.csv")
 
 #After break read back in the file 
-
 ycg.bs.gams.df <- read.csv("ycg.bs.gams.df.csv")
 
-# read
-#ycg.bs.gams.df <- read.csv("Output/Results/Trends/Bootstraps/ycg.bs.gams.df.csv")
 ycg.bs.gams.df <- ycg.bs.gams.df %>% select(-X)
 
 # test what percentage of the last BS gam estimates are above the first. This is to test for a significant upward trend 
@@ -411,10 +410,6 @@ table(trend.df.ycg)
 # extract 2.5, 7.5, 50, 92.5 and 97.5 quantiles (85% and 95% CIs)
 ycg.bs_ints <- data.frame(apply(ycg.bs.gams.df, 1, quantile, probs=c(0.025, 0.075, 0.5, 0.925, 0.975)))
 ycg.bs_ints <- ycg.bs_ints %>% rownames_to_column("quant")
-
-
-# Put into tidy format
-#BS_ints_tidy <- gather(BS_ints, key = "year", value = "confits", -quant)
 
 # quantiles into vectors
 ycg.quants <- data.frame(Year = seq(from=2010, to=2022, length.out = 100),
@@ -428,17 +423,10 @@ write.csv(ycg.quants, "ycg.quants.csv")
 
 # load quantiles
 ycg.quants <- read.csv("ycg.bs.gams.df.csv")
-#str(ycg.quants)
-#ycg.quants <- ycg.quants[ ,-1] #these two lines were removieing the year variable and making quants almost impossible to plot
-
 
 ### plots
 
-ycg.quants$Q2.5 <- ycg.quants$Q2.5 * 1000000
-ycg.quants$Q7.5 <- ycg.quants$Q7.5 * 1000000
-ycg.quants$Q50 <- ycg.quants$Q50 * 1000000
-ycg.quants$Q92.5 <- ycg.quants$Q92.5 * 1000000  
-ycg.quants$Q97.5 <- ycg.quants$Q97.5 * 1000000
+#Before plotting need to consider what units your effort expendature is in. KM? M?
 
 # 95% CIs, colour
 ycg_plot_95 <- plot95fun(ycg.dat,ycg.quants,"Yellow-cheeked crested Gibbon","Grp","Group abundance",2500)
@@ -453,8 +441,6 @@ print(ycg_plot_85_gr)
 plot <- plot95Grfun(ycg.dat,ycg.quants,"Yellow-cheeked crested gibbon","Ind",
                               "Individual abundance",3100)
 print(plot)
-
-################################################################################################################################################################################
 
     ## GSL ####
 
@@ -471,7 +457,7 @@ for(dfval in 1:3){
   gsl.aic.res[paste0("df", dfval)] <- summary(gsl.gam.df)$aic }
 
 # Choose the fit with lowest AIC:
-which.min(gsl.aic.res) # df=3
+which.min(gsl.aic.res)
 
 
 ## Get confidence intervals from the bootstrapped replicates
@@ -513,12 +499,12 @@ fitspecies.func.GSL <- function(bootrep){
   
   
   # extract estimates
-  estimates <- detfunc$dht$individuals$N[1:8, 1:2]
+  estimates <- detfunc$dht$individuals$N[1:8, 1:2]8
   estimates <- estimates %>% dplyr::rename(Year = Label) 
   estimates$Year <- as.numeric(estimates$Year)
   
   # fit a GAM & predict
-  gamfit <- gam(Estimate ~ s(Year, df=2), family=gaussian(link="identity"), data = estimates)
+  gamfit <- gam(Estimate ~ s(Year, df=1), family=gaussian(link="identity"), data = estimates)
   newdata <- data.frame(Year = seq(from=2010, to=2022, length.out = 100))
   pred <- predict.Gam(gamfit, newdata = newdata, type = "response")
   gampred <- data.frame(pred)
@@ -535,14 +521,9 @@ gsl.bs.gams.df <- data.frame(matrix(unlist(gsl.bs.gams), nrow=100, byrow = FALSE
 write.csv(gsl.bs.gams.df, file="gsl.bs.gams.df.csv")
 
 #Read the model back in 
-
 gsl.bs.gams.df <- read.csv("gsl.bs.gams.df.csv")
 
-# load
-#gsl.bs.gams.df <- read.csv("Output/Results/Trends/Bootstraps/gsl.bs.gams.df.csv")
-#gsl.bs.gams.df <- gsl.bs.gams.df[ ,-1] Removed this part of code because it was removing the year column in quants and making them imporrible to plot 
-
-# test what percentage of the last BS gam estimates are above the first. This is to test for a significant upward trend 
+# test what percentage of the last BS gam estimates are above the first. This is to test for a significant trend
 trend.df <- data.frame(apply(gsl.bs.gams.df,2,trendFunc))
 table(trend.df)
 # 93% of replicates suggest negative trend
@@ -550,9 +531,6 @@ table(trend.df)
 # extract 2.5, 7.5, 50, 92.5 and 97.5 quantiles (85 & 95% CIs)
 gsl.bs_ints <- data.frame(apply(gsl.bs.gams.df, 1, quantile, probs=c(0.025, 0.075, 0.5, 0.925, 0.975)))
 gsl.bs_ints <- gsl.bs_ints %>% rownames_to_column("quant")
-
-# Put into tidy format
-#BS_ints_tidy <- gather(BS_ints, key = "year", value = "confits", -quant)
 
 # quantiles into vectors
 gsl.quants <- data.frame(Year = seq(from=2010, to=2022, length.out = 100),
@@ -562,23 +540,15 @@ gsl.quants <- data.frame(Year = seq(from=2010, to=2022, length.out = 100),
                          Q92.5 = as.numeric(gsl.bs_ints[4,2:101]),
                          Q97.5 = as.numeric(gsl.bs_ints[5,2:101]))
 # save quantiles
-write.csv(gsl.quants, "gsl.quants.csv")
+write.csv(gsl.quants, "gsl.quants.is.2.csv")
 
 # load quantiles
-gsl.quants <- read.csv("gsl.quants.csv")
+gsl.quants <- read.csv("gsl.quants.is.2.csv")
 gsl.quants <- gsl.quants[ ,-1]
-
 
 ### plots
 
-
-#Times the quant by 1 million so in the same units as population estimates 
-
-gsl.quants$Q2.5 <- gsl.quants$Q2.5 * 1000000
-gsl.quants$Q7.5 <- gsl.quants$Q7.5 * 1000000
-gsl.quants$Q50 <- gsl.quants$Q50 * 1000000
-gsl.quants$Q92.5 <- gsl.quants$Q92.5 * 1000000  
-gsl.quants$Q97.5 <- gsl.quants$Q97.5 * 1000000
+# Keep in mind what units you have your effort in before plotting. Km? M?
 
 # 95% colour
 gsl_plot_95 <- plot95fun(gsl.dat,gsl.quants,"Silver langur","Grp","Group abundance",2500)
@@ -587,10 +557,10 @@ gsl_plot_95 <- plot95fun(gsl.dat,gsl.quants,"Silver langur","Grp","Group abundan
 gsl_plot_85_gr <- plot85Grfun(gsl.dat,gsl.quants,"Silver langur","Grp","Group abundance",2500)
 
 # 95% black and white
-gsl_plot_95_gr <- plot95Grfun(gsl.dat,gsl.quants,"Silver langur","Ind","Group individual abundance",10500)
+gsl_plot_95_gr <- plot95Grfun(gsl.dat,gsl.quants,"Germain's silvered langur","Ind","Group individual abundance",10500)
 print(gsl_plot_95_gr)
 
-    ## LTM ###################################################################################################################################################################
+    ## LTM ###
 
 ltm.dat <- select(ltm.dat, -X)
 ltm.dat$year <- as.numeric(ltm.dat$year)
@@ -605,8 +575,6 @@ for(dfval in 1:3){
 
 # Choose the fit with lowest AIC:
 which.min(ltm.aic.res) #df=1
-
-
 
 ## Get confidence intervals from the bootstrapped replicates
 
@@ -670,21 +638,14 @@ write.csv(ltm.bs.gams.df, file="ltm.bs.gams.df.csv")
 
 # load (if required)
 ltm.bs.gams.df <- read.csv("ltm.bs.gams.df.csv")
-#ltm.bs.gams.df <- ltm.bs.gams.df[ ,-1]
-
 
 # test what percentage of the last BS gam estimates are above the first. This is to test for a significant upward trend 
 trend.df <- data.frame(apply(ltm.bs.gams.df,2,trendFunc))
 table(trend.df)
-# 75% of replicates suggest negative trend
-
 
 # extract 2.5,50 and 97.5 quantiles
 ltm.bs_ints <- data.frame(apply(ltm.bs.gams.df, 1, quantile, probs=c(0.025, 0.075, 0.5, 0.925, 0.975)))
 ltm.bs_ints <- ltm.bs_ints %>% rownames_to_column("quant")
-
-# Put into tidy format
-#BS_ints_tidy <- gather(BS_ints, key = "year", value = "confits", -quant)
 
 # quantiles into vectors
 ltm.quants <- data.frame(Year = seq(from=2010, to=2022, length.out = 100),
@@ -700,14 +661,8 @@ write.csv(ltm.quants, "ltm.quants.csv")
 # load quantiles
 ltm.quants <- read.csv("ltm.quants.csv")
 
-
 ### plots 
-
-ltm.quants$Q2.5 <- ltm.quants$Q2.5 * 1000000
-ltm.quants$Q7.5 <- ltm.quants$Q7.5 * 1000000
-ltm.quants$Q50 <- ltm.quants$Q50 * 1000000
-ltm.quants$Q92.5 <- ltm.quants$Q92.5 * 1000000  
-ltm.quants$Q97.5 <- ltm.quants$Q97.5 * 1000000
+#Consider what units your effort is in before plotting 
 
 # 95% colour
 ltm_plot_95 <- plot95fun(ltm.dat,ltm.quants,"Long-tailed macaque","Grp","Group abundance",2000)
@@ -720,7 +675,7 @@ ltm_plot_95_gr <- plot95Grfun(ltm.dat,ltm.quants,"Long-tailed macaque","Ind","In
 print(ltm_plot_95_gr)
 
 
-    ## PTM #################################################################################################################################
+    ## PTM ###
 
 ptm.dat <- select(ptm.dat, -X)
 ptm.dat$year <- as.numeric(ptm.dat$year)
@@ -735,7 +690,7 @@ for(dfval in 1:3){
   ptm.aic.res[paste0("df", dfval)] <- summary(ptm.gam.df)$aic }
 
 # Choose the fit with lowest AIC:
-which.min(ptm.aic.res) # df=1
+which.min(ptm.aic.res)
 
 
 ## Get confidence intervals from the bootstrapped replicates
@@ -801,12 +756,8 @@ ptm.bs.gams.df <- data.frame(matrix(unlist(ptm.bs.gams), nrow=100, byrow = FALSE
 # save (to avoid having to re-run)
 write.csv(ptm.bs.gams.df, file="ptm.bs.gams.df.csv")
 
+# Read back in if needed
 ptm.bs.gams.df<- read.csv("ptm.bs.gams.df.csv")
-
-# load
-#ptm.bs.gams.df <- read.csv("Output/Results/Trends/Bootstraps/ptm.bs.gams.df.csv")
-#ptm.bs.gams.df <- ptm.bs.gams.df[ ,-1]
-
 
 # test what percentage of the last BS gam estimates are above the first. This is to test for a significant upward trend 
 trend.df <- data.frame(apply(ptm.bs.gams.df,2,trendFunc))
@@ -844,13 +795,6 @@ write.csv(ptm.quants, "ptm.quants.csv")
 ptm.quants <- read.csv("ptm.quants.csv")
 #ptm.quants <- ptm.quants[ ,-1]
 
-ptm.quants$Q2.5 <- ptm.quants$Q2.5 * 1000000
-ptm.quants$Q7.5 <- ptm.quants$Q7.5 * 1000000
-ptm.quants$Q50 <- ptm.quants$Q50 * 1000000
-ptm.quants$Q92.5 <- ptm.quants$Q92.5 * 1000000  
-ptm.quants$Q97.5 <- ptm.quants$Q97.5 * 1000000
-
-
 ### plots
 
 # 95% colour
@@ -864,7 +808,7 @@ ptm_plot_95_gr <- plot95Grfun(ptm.dat,ptm.quants,"Pig-tailed macaque","Ind","Ind
 print(ptm_plot_95_gr)
 
 
-    ## STM ################################################################################################################## DONT DO
+    ## STM #### Not edited to include 2022 data
 
 stm.dat <- select(stm.dat, -X)
 stm.dat$year <- as.numeric(stm.dat$year)
@@ -879,8 +823,7 @@ for(dfval in 1:3){
   stm.aic.res[paste0("df", dfval)] <- summary(stm.gam.df)$aic }
 
 # Choose the fit with lowest AIC:
-which.min(stm.aic.res) # 1
-
+which.min(stm.aic.res)
 
 ## Get confidence intervals from the bootstrapped replicates
 
@@ -980,9 +923,6 @@ write.csv(stm.bs.est.df, file="Output/Results/Trends/Bootstraps/stm.bs.ests.df.c
 # load estimates
 #stm.est.res <- read.csv("Output/Results/Trends/Bootstraps/stm.bs.ests.df.csv")
 
-
-
-
 ### The bootstrapped quantile CIs were coming out pretty wild, so below are some diagnostics
 
 # split the GAM predictions from the point estimates from each replicate
@@ -1052,10 +992,6 @@ ggplot(alldf, aes(x=rep, y=estimate, group=label, colour=label))+
 stm.bs.gams.df.sub <- data.frame(apply(stm.bs.gams.df, 2, function(x) ifelse(x >700, 0, x)))
 str(stm.bs.gams.df.sub)
 
-
-
-
-
 # test what percentage of the last BS gam estimates are above the first. This is to test for a significant upward trend 
 trend.df.stm <- data.frame(apply(stm.bs.gams.df,2,trendFunc))
 table(trend.df.stm)
@@ -1078,10 +1014,10 @@ stm.quants <- data.frame(year = seq(from=2010, to=2020, length.out = 100),
                          Q97.5 = as.numeric(stm.bs_ints[5,2:101]))
 
 # save quantiles
-write.csv(stm.quants, "Output/Results/Plots/BS_quants/stm.quants.csv")
+write.csv(stm.quants, "stm.quants.csv")
 
 # load quantiles
-stm.quants <- read.csv("Output/Results/Plots/BS_quants/stm.quants.csv")
+stm.quants <- read.csv("stm.quants.csv")
 stm.quants <- stm.quants[ ,-1]
 
 # change negative 2.5% quantiles to 0
@@ -1151,12 +1087,7 @@ stm.95 <- ggplot() +
           axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)),
           plot.title = element_text(margin = margin(t = 0, r = 0, b = 20, l = 0)))
   
-  
-
-
-
-
-    ## BSD ##########################################################################################################################
+    ## BSD ###
 
 bsd.dat <- select(bsd.dat, -X)
 bsd.dat$year <- as.numeric(bsd.dat$Year)
@@ -1270,14 +1201,9 @@ write.csv(bsd.quants, "bsd.quants.csv")
 # load quantiles
 bsd.quants <- read.csv("bsd.quants.csv")
 
-
 ### plots
 
-bsd.quants$Q2.5 <- bsd.quants$Q2.5 * 1000000
-bsd.quants$Q7.5 <- bsd.quants$Q7.5 * 1000000
-bsd.quants$Q50 <- bsd.quants$Q50 * 1000000
-bsd.quants$Q92.5 <- bsd.quants$Q92.5 * 1000000  
-bsd.quants$Q97.5 <- bsd.quants$Q97.5 * 1000000
+#Make sure to double check what units your effort data is in
 
 # 95% colour
 bsd_plot_95 <- plot95fun(bsd.dat,bsd.quants,"Black-shanked douc","Grp","Group abundance",17000)
@@ -1292,7 +1218,7 @@ bsd_plot_95_gr <- plot95Grfun(bsd.dat,bsd.quants,"Black-shanked douc","Ind","Ind
 print(bsd_plot_95_gr)
 
 
-    ## BTG ########################################################################################################## DO NOT DO
+    ## BTG ### Not edited to include 2022 data
 
 btg.dat <- select(btg.dat, -X)
 btg.dat$year <- as.numeric(btg.dat$year)
@@ -1411,7 +1337,7 @@ btg.95 <- ggplot()+
         plot.title = element_text(margin = margin(t = 0, r = 0, b = 20, l = 0)))
 
 
-    ## GAU ####################################################################################################################### DO NOT DO
+    ## GAU ### Not edited to include 2022 data
 
 
 gau.dat <- select(gau.dat, -X)
@@ -1638,7 +1564,7 @@ gau.95 <- ggplot() +
           plot.title = element_text(margin = margin(t = 0, r = 0, b = 20, l = 0)))
 
 
-    ## PIG #######################################################################################################################################
+    ## PIG ##
 
 pig.dat <- select(pig.dat, -X)
 pig.dat$year <- as.numeric(pig.dat$Year)
@@ -1652,8 +1578,7 @@ for(dfval in 1:3){
   pig.aic.res[paste0("df", dfval)] <- summary(pig.gam.df)$aic }
 
 # Choose the fit with lowest AIC:
-which.min(pig.aic.res) # df = 3
-
+which.min(pig.aic.res) 
 
 ## Get confidence intervals from the bootstrapped replicates
 
@@ -1713,7 +1638,7 @@ system.time(pig.bs.gams <- lapply(1:length(boot.res), fitspecies.func.PIG)) #48m
 pig.bs.gams.df <- data.frame(matrix(unlist(pig.bs.gams), nrow=100, byrow = FALSE))
 
 # save (to avoid having to re-run)
-write.csv(pig.bs.gams.df, file="pig.bs.gams.df.2.csv")
+write.csv(pig.bs.gams.df, file="pig.bs.gams.df.csv")
 
 # load
 pig.bs.gams.df <- read.csv("pig.bs.gams.df.csv")
@@ -1740,12 +1665,9 @@ pig.bs.gams.df <- mutate_all(pig.bs.gams.df, function(x) as.numeric(as.character
 pig.bs_ints <- data.frame(apply(pig.bs.gams.df, 1, quantile, probs=c(0.025, 0.075, 0.5, 0.925, 0.975)))
 pig.bs_ints <- pig.bs_ints %>% rownames_to_column("quant")
 
-#experiment with remocing bum rows 
+#The first three rows are also skewing the estimate, remove these 
 
 pig.bs_ints <- subset(pig.bs_ints, select = -c(X1, X2, X3))
-
-# Put into tidy format
-#BS_ints_tidy <- gather(BS_ints, key = "year", value = "confits", -quant)
 
 # quantiles into vectors
 pig.quants <- data.frame(Year = seq(from=2010, to=2022, length.out = 97),
@@ -1760,17 +1682,10 @@ write.csv(pig.quants, "pig.quants.csv")
 
 # load quantiles
 pig.quants <- read.csv("pig.quants.csv")
-#pig.quants <- pig.quants[ ,-1]
-
 
 ### plots
 
-#To make the same effort so plots make sense 
-pig.quants$Q2.5 <- pig.quants$Q2.5 * 1000000
-pig.quants$Q7.5 <- pig.quants$Q7.5 * 1000000
-pig.quants$Q50 <- pig.quants$Q50 * 1000000
-pig.quants$Q92.5 <- pig.quants$Q92.5 * 1000000  
-pig.quants$Q97.5 <- pig.quants$Q97.5 * 1000000
+#Make sure to double check what units your effort is in
 
 # 95% colour
 pig_plot_95 <- plot95fun(pig.dat,pig.quants,"Wild pig","Ind","Individual abundance",7000)
@@ -1783,7 +1698,7 @@ pig_plot_95_gr <- plot95Grfun(pig.dat,pig.quants,"Wild pig","Ind","Individual ab
 print(pig_plot_95_gr)
 
 
-    ## GPF #################################################################################################################
+    ## GPF ###
 
 gpf.dat <- select(gpf.dat, -X)
 gpf.dat$year <- as.numeric(gpf.dat$year)
@@ -1797,8 +1712,7 @@ for(dfval in 1:3){
   gpf.aic.res[paste0("df", dfval)] <- summary(gpf.gam.df)$aic }
 
 # Choose the fit with lowest AIC:
-which.min(gpf.aic.res) # df = 3
-
+which.min(gpf.aic.res) 
 
 
 ## Get confidence intervals from the bootstrapped replicates
@@ -1876,9 +1790,6 @@ table(trend.df)
 gpf.bs_ints <- data.frame(apply(gpf.bs.gams.df, 1, quantile, probs=c(0.025, 0.075, 0.5, 0.925, 0.975)))
 gpf.bs_ints <- gpf.bs_ints %>% rownames_to_column("quant")
 
-# Put into tidy format
-#BS_ints_tidy <- gather(BS_ints, key = "year", value = "confits", -quant)
-
 # quantiles into vectors
 gpf.quants <- data.frame(Year = seq(from=2010, to=2022, length.out = 100),
                          Q2.5 = as.numeric(gpf.bs_ints[1,2:101]),
@@ -1896,12 +1807,7 @@ gpf.quants <- read.csv("gpf.quants.csv")
 
 ### plots
 
-gpf.quants$Q2.5 <- gpf.quants$Q2.5 * 1000000
-gpf.quants$Q7.5 <- gpf.quants$Q7.5 * 1000000
-gpf.quants$Q50 <- gpf.quants$Q50 * 1000000
-gpf.quants$Q92.5 <- gpf.quants$Q92.5 * 1000000  
-gpf.quants$Q97.5 <- gpf.quants$Q97.5 * 1000000
-
+#Be sure to double check what units your effort is in 
 
 # 95% colour
 gpf_plot_95 <- plot95fun(gpf.dat,gpf.quants,"Green peafowl","Ind","Individual abundance",3000)
@@ -1914,7 +1820,7 @@ plot95Grfun(gpf.dat,gpf.quants,"Green peafowl","Ind","Individual abundance",3000
 
 
 
-    ## RED ###############################################################################################################################################
+    ## RED ####
 
 red.dat <- select(red.dat, -X)
 red.dat$year <- as.numeric(red.dat$year)
@@ -1929,7 +1835,7 @@ for(dfval in 1:3){
   red.aic.res[paste0("df", dfval)] <- summary(red.gam.df)$aic }
 
 # Choose the fit with lowest AIC:
-which.min(red.aic.res) # df = 3
+which.min(red.aic.res)
 
 
 ## Get confidence intervals from the bootstrapped replicates
@@ -2003,13 +1909,9 @@ trend.df <- data.frame(apply(red.bs.gams.df,2,trendFunc))
 table(trend.df)
 # 100% of replicates suggest negative trend
 
-
 # extract 2.5, 7.5, 50, 92.5, and 97.5 quantiles
 red.bs_ints <- data.frame(apply(red.bs.gams.df, 1, quantile, probs=c(0.025, 0.075, 0.5, 0.925, 0.975)))
 red.bs_ints <- red.bs_ints %>% rownames_to_column("quant")
-
-# Put into tidy format
-#BS_ints_tidy <- gather(BS_ints, key = "year", value = "confits", -quant)
 
 # quantiles into vectors
 red.quants <- data.frame(Year = seq(from=2010, to=2022, length.out = 100),
@@ -2028,11 +1930,7 @@ red.quants <- red.quants[ ,-1]
 
 ### plots
 
-red.quants$Q2.5 <- red.quants$Q2.5 * 1000000
-red.quants$Q7.5 <- red.quants$Q7.5 * 1000000
-red.quants$Q50 <- red.quants$Q50 * 1000000
-red.quants$Q92.5 <- red.quants$Q92.5 * 1000000  
-red.quants$Q97.5 <- red.quants$Q97.5 * 1000000
+#Make sure to double check what units your effort data is in 
 
 # 95% colour
 red_plot_95 <- plot95fun(red.dat,red.quants,"Red muntjac","Ind","Individual abundance",7000)
@@ -2045,7 +1943,7 @@ plot95Grfun(red.dat,red.quants,"Red muntjac","Ind","Individual abundance",6500)
 
 
 
-  ## Trends & estimates ####
+  ## Trends & estimates #### --- The below not edited to include 2022, should be easy to add though
 
     
 # load all BS estimates
