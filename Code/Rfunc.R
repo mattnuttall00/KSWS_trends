@@ -10,7 +10,7 @@ library('patchwork')
 library('DescTools')
 
 ## load data (allData). This is the master data from the CDS analysis
-load("C:/Users/cagger/Documents/Transect sampling/Transect 2022/analysis/Pop assess/GAMs from Github/Cloned through R project/KSWS_trends/Data/KSWS_MASTER.Rdata")
+load("Data/KSWS_MASTER.Rdata")
 ## In this dataframe, stratum == year.
 
 ## Remove T20 from allData and obs.table
