@@ -1,0 +1,122 @@
+---
+title: "2022 Distance sampling analysis data set up"
+output: html_document
+author: "Cain Agger"
+date: "May 2022"
+---
+
+```{r setup, include=FALSE}
+# Need to load these again for knitr, even if loaded in the environment
+library(Distance)
+library(dsm)
+library(DSsim)
+library(mads)
+library(rmarkdown)
+library(mrds)
+library(knitr)
+library(tidyverse)
+```
+
+# Data formatting & set up 
+
+Alot of data clean up and checking is conducted during the period of data collection, thus the dataframe is not that dirty and only needs mild standardization, transforming and cleaning.
+
+Using Excel the data has already been transformed from the format that it is kept in within the MASTER sheet to the format that is needed to perform Distance analysis in R. This format contains 4 sheets within the Excel document 1) region.table 2) sample.table 3) obs.table and 4) data. These tables follow the specification outline in the Distance package documentation (https://cran.r-project.org/web/packages/Distance/Distance.pdf)
+
+Each of these sheets are stored as CSV and can be loaded into the R environement. 
+
+```{r}
+
+#read in the respective CSVs
+
+allData <- read.csv("data.csv")
+region.table <- read.csv("region.table.csv")
+sample.table <- read.csv("sample.table.csv")
+obs.table <- read.csv("obs.table.csv")
+
+```
+
+To ensure these CSVs have loaded in correctly and are familiar with the structure and storage type of the variables now that the data is loaded into R, check the top portion of each of these dataframes and its caracteristics
+
+```{r}
+
+#allData
+
+head(allData)
+str(allData)
+
+#region.table
+
+head(region.table)
+str(region.table)
+
+#sample.table
+
+head(sample.table)
+str(sample.table)
+
+#obs.table
+
+head(obs.table)
+str(obs.table)
+
+```
+
+# Data standardisation
+
+To keep this simple making sure the units are all in meters is best done now.
+
+```{r}
+
+# Convert all units to meters (simpler than using ds())
+sample.table$Effort <- sample.table$Effort*1000 # Convert km to m
+region.table$Area  <- region.table$Area*1000000 # Convert km2 to m2
+
+```
+
+Need to check if all of the variables are spelled/stored consistently across years and projects. This can be done by looking at the unique values in the columns with discrete variables and changing the names if there are any mistakes 
+
+```{r}
+
+
+## observer names 
+
+allData %>%
+        group_by(obs.observer) %>%
+        tally()
+
+# Change observer names to become consistent
+
+allData["obs.observer"][allData["obs.observer"] == "OrnSamart"] <- "Orn Art"
+allData["obs.observer"][allData["obs.observer"] == "BunTeing"] <- "Noeun BunThenh"
+allData["obs.observer"][allData["obs.observer"] == "Noeun Bunthenh"] <- "Noeun BunThenh"
+allData["obs.observer"][allData["obs.observer"] == "KhnySokry"] <- "Khny Sokry"
+allData["obs.observer"][allData["obs.observer"] == "SotVandoeun"] <- "Sot Vandoeun"
+allData["obs.observer"][allData["obs.observer"] == "PhokSopanha"] <- "Phok Sopanha"
+allData["obs.observer"][allData["obs.observer"] == "ToeuBann"] <- "Toeu Bann"
+
+## species
+
+allData %>%
+        group_by(species) %>%
+        tally()
+
+#Change YCG to YCCG
+allData["species"][allData["species"] == "YCG"] <- "YCCG"
+
+## obs.AMPM
+
+allData %>%
+        group_by(obs.AMPM) %>%
+        tally()
+
+```
+
+# Saving the data 
+
+Save the data in the R environment for individual species analysis 
+```{r}
+
+save(allData, region.table, sample.table, obs.table, file="KSWS_MASTER_DATA.Rdata")
+
+```
