@@ -1,0 +1,4 @@
+object,distance,size,species,stratum,obs.transect,obs.time,obs.AMPM,obs.habitat,obs.observer
+1,0,1,BSD,2010,1,NA,NA,NA,HouenSeangLay
+2,10.725,2,BSD,2010,1,NA,NA,NA,HouenSeangLay
+3,4,2,BSD,2010,1,NA,NA,NA,HouenSeangLay
