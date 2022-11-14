@@ -37,6 +37,8 @@ To allow this repo to be public, we have removed all raw species data except som
 
 ## Contacts
 
+If you have questions or issues with the code in this repository, please raise an issue in the first instance. If you have more general questions or requests about the project, please use the contact details below:
+
 * Matt Nuttall - mattnuttall00@gmail.com
 * Cain Agger - cagger@wcs.org
 * Olly Griffin - ogriffin@wcs.org
