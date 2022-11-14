@@ -16,20 +16,20 @@ There are two primary R scripts in this repository:
 ## Environment
 
 The code was originally developed using R version 4.0.4. The following pacakges and versions were used when developing the code:
-`Tidyverse` v1.3.0
-`Distance` v1.0.2
-`data.table` v1.14.0
-`gam` v1.20
-`patchwork` v1.1.1
-`DescTools` v0.99.42
+* `Tidyverse` v1.3.0
+* `Distance` v1.0.2
+* `data.table` v1.14.0
+* `gam` v1.20
+* `patchwork` v1.1.1
+* `DescTools` v0.99.42
 
 ## Data
 
 For the above scripts to run, you need: 
 
-* The raw transect results from KSWS or another study (see "Example data/data.csv" for an example) 
-* A summary csv for each species with the results from the convential distance sampling (see "Example data/BSD_results" folder for example data)
-* Copies of the `obs.table.csv`, `region.table.csv`, and an up to date `sample.table.csv` (see "Example data" folder)
+* The raw transect results from KSWS or another study (see `Example data/data.csv` for an example) 
+* A summary csv for each species with the results from the convential distance sampling (see `Example data/BSD_results` folder for example data)
+* Copies of the `obs.table.csv`, `region.table.csv`, and an up to date `sample.table.csv` (see `Example data` folder)
 
 ## License 
 
