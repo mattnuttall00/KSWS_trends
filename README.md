@@ -33,7 +33,7 @@ For the above scripts to run, you need:
 
 ## License 
 
-To allow this repo to be public, we have removed all raw species data except some example data from Black-shanked douc, which are common and widespread across KSWS. All code authors are happy for the code to be open source in the widest sense (hence the MIT license). Anyone is welcome to copy, share, edit, publish, and use this code for whatever purpose. 
+To allow this repo to be public, we have removed all raw species data except some example data from Black-shanked douc, which are common and widespread across KSWS. All code authors are happy for the code to be open source in the widest sense (hence the MIT license). Anyone is welcome to copy, share, edit, publish, and use this code for whatever purpose. See `License` for further details.
 
 ## Contacts
 
