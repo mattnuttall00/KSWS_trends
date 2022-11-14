@@ -15,7 +15,7 @@ There are two primary R scripts in this repository:
 
 ## Environment
 
-The code was originally developed using R version 4.0.4. The following pacakges and versions were used when developing the code:
+The code was originally developed using R version 4.0.4. The following packages and versions were used when developing the code:
 * `Tidyverse` v1.3.0
 * `Distance` v1.0.2
 * `data.table` v1.14.0
